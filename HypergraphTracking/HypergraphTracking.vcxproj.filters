@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="Setting.cpp" />
+    <ClCompile Include="HyperGraphTracker.cpp">
+      <Filter>HyperGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Detection.cpp">
+      <Filter>Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="Reconstruction.cpp">
+      <Filter>Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="hjlib.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+    <ClCompile Include="cameraModel.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Setting.h" />
+    <ClInclude Include="settings.txt">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="HyperGraphTracker.h">
+      <Filter>HyperGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Detection.h">
+      <Filter>Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="Reconstruction.h">
+      <Filter>Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="hjlib.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="cameraModel.h">
+      <Filter>Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="defines.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Data">
+      <UniqueIdentifier>{051787c0-4fc6-4190-aa3c-42aaca0cc4fc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HyperGraph">
+      <UniqueIdentifier>{8244e288-0ed1-4304-aa1d-4eac617e9e56}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Elements">
+      <UniqueIdentifier>{e64efc53-f0b4-436f-aed2-5d8c20a1de7c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Helpers">
+      <UniqueIdentifier>{23916558-445f-4d5e-aa60-4d5c082e4ec5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
