@@ -13,11 +13,6 @@ const char DELIM = '=';
 const char DELIM_ARRAY = ',';
 const int  MAX_CHARS_PER_LINE = 10240;
 
-typedef enum { PETS_S2L1 = 0, PETS_S2L2, PETS_S2L3, NUM_PETS_SENARIO } PETS_SCENARIO;
-const int START_FRAME_INDICES  [NUM_PETS_SENARIO] = {0, 0, 0};
-const int END_FRAME_INDICES    [NUM_PETS_SENARIO] = {794, 432, 239};
-const std::string SCENARIO_PATH[NUM_PETS_SENARIO] = { "S2/L1/Time_12-34", "S2/L2/Time_14-55", "S2/L3/Time_14-41" };
-
 CSetting::CSetting(void)
 	: bInit_(false), numCams_(0), startFrameIdx_(0), endFrameIdx_(0), numFrames_(0)
 {

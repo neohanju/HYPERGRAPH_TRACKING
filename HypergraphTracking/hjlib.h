@@ -37,6 +37,7 @@ typedef std::pair<cv::Point2d, cv::Point2d> LINE_SEGMENT;
 
 // file interface related
 //bool CreateDirectoryForWindows(const std::string &dirName);
+cv::Mat ReadMatrix(const std::string strFilePath);
 
 // math related
 bool GetIntersection(LINE_SEGMENT segment1, LINE_SEGMENT segment2, cv::Point2d *intersection = NULL);

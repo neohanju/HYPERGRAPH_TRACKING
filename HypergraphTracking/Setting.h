@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "defines.hpp"
 #include <vector>
 
 class CSetting

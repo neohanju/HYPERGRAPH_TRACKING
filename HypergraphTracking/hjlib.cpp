@@ -21,6 +21,40 @@ namespace hj {
 //	return false;
 //}
 
+cv::Mat ReadMatrix(const std::string strFilePath)
+{
+	FILE *fp;
+	int numRows = 0, numCols = 0;
+	float curSensitivity = 0.0;
+	cv::Mat matRead;
+
+	try
+	{
+		fopen_s(&fp, strFilePath.c_str(), "r");
+		if (NULL == fp) { return matRead; }
+
+		fscanf_s(fp, "row:%d,col:%d\n", &numRows, &numCols);
+		matRead = cv::Mat::zeros(numRows, numCols, CV_32FC1);
+
+		for(unsigned int rowIdx = 0; rowIdx < (unsigned int)numRows; rowIdx++)
+		{
+			for(unsigned int colIdx = 0; colIdx < (unsigned int)numCols; colIdx++)
+			{
+				fscanf_s(fp, "%f,", &curSensitivity);
+				matRead.at<float>(rowIdx, colIdx) = curSensitivity;
+			}
+			fscanf_s(fp, "\n");
+		}
+		fclose(fp);		
+	}
+	catch(int nError)
+	{
+		printf("[ERROR] cannot open matrix from %s with error %d\n", strFilePath, nError);
+	}
+
+	return matRead;
+}
+
 /************************************************************************
  Method Name: GetIntersection
  Description: 

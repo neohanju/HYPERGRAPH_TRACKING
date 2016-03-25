@@ -21,6 +21,9 @@ RESULT_SAVE_PATH=D:/Workspace/ExperimentalResult
 % ground truth
 GROUND_TRUTH_PATH=groundTruth/cropped.txt
 
+% reconstruction parameters
+
+
 %()()
 %('')HAANJU.YOO
 
