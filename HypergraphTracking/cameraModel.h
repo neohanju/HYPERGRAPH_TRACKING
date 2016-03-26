@@ -106,10 +106,10 @@ namespace Etiseo {
 	  
 	  //! Coordinate manipulation
 	  //! from image coordinate to world coordinate
-	  bool imageToWorld(double Xi, double Yi, double Zw, double& Xw, double &Yw);
+	  bool imageToWorld(double Xi, double Yi, double Zw, double& Xw, double &Yw) const;
 	  
 	  //! from world coordinate to image coordinate
-	  bool worldToImage(double Xw, double Yw, double Zw, double& Xi, double& Yi);
+	  bool worldToImage(double Xw, double Yw, double Zw, double& Xi, double& Yi) const;
 	  
 	  //! convert from undistorted to distorted image
 	  bool undistortedToDistortedImageCoord (double Xfu, double Yfu, double& Xfd, double& Yfd);
@@ -127,9 +127,9 @@ namespace Etiseo {
 		
 		//! Coordinate manipulation, intermediate transformation :
 		//! convert from distorted to undistorted sensor plane coordinates 
-		void distortedToUndistortedSensorCoord (double Xd, double Yd, double& Xu, double& Yu);
+		void distortedToUndistortedSensorCoord (double Xd, double Yd, double& Xu, double& Yu) const;
 		//! convert from undistorted to distorted sensor plane coordinates
-		void undistortedToDistortedSensorCoord (double Xu, double Yu, double& Xd, double& Yd);
+		void undistortedToDistortedSensorCoord (double Xu, double Yu, double& Xd, double& Yd) const;
 		
 	private:
 		

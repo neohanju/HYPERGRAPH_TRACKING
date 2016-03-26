@@ -33,7 +33,10 @@ const std::string SCENARIO_PATH[NUM_PETS_SENARIO] = { "S2/L1/Time_12-34", "S2/L2
 // PARAMETERS
 /////////////////////////////////////////////////////////////////////////
 
+const double DEFAULT_HEIGHT = 1700;
+
 // default setting written in the paper
+const double FRAME_RATE = 7.5; // video frame rate
 const double V_MAX    = 5000; // the maximal walking speed of a person (5 m/s)
 const double D_B_MAX  = 1000; // "close to the boundary" condition (1 m)
 const double ALPHA_H  = 2.0; // ratio of the boundary detection's height to the minimum detectable height of detections
@@ -48,5 +51,7 @@ const int    DELTA_T_MAX = 9; // the maximum frame gap
 struct stHypergraphTrackingParams
 {
 	// not in the paper, but from the author (by e-mail)
+	double P_EN_TAU; // lifetime for decaying function in the entering probability
+	double P_EX_TAU; // lifetime for decaying function in the exiting probability
 };
 

@@ -21,7 +21,7 @@ public:
 	std::string GetResultPath(void)          { return strResultPath_; }
 	std::string GetViewPath(int camIdx)      { return vecStrViewPaths_[camIdx]; }
 	std::string GetDetectionPath(int camIdx) { return vecStrDetectionPaths_[camIdx]; }
-	
+	stHypergraphTrackingParams* GetParamHGT(void) { return &paramHGT_; }
 
 private:
 	void ParseArray(const std::string strInput, std::vector<int> &output);
@@ -39,6 +39,7 @@ private:
 	std::string strGroundTruthPath_;
 	std::string strResultPath_;
 	std::vector<std::string> vecStrViewPaths_;
-	std::vector<std::string> vecStrDetectionPaths_;	
+	std::vector<std::string> vecStrDetectionPaths_;
+	stHypergraphTrackingParams paramHGT_;
 };
 

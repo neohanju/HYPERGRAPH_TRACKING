@@ -34,13 +34,19 @@
 namespace hj {
 
 typedef std::pair<cv::Point2d, cv::Point2d> LINE_SEGMENT;
+typedef std::pair<cv::Point3d, cv::Point3d> LINE_SEGMENT_3D;
 
 // file interface related
 //bool CreateDirectoryForWindows(const std::string &dirName);
 cv::Mat ReadMatrix(const std::string strFilePath);
 
 // math related
-bool GetIntersection(LINE_SEGMENT segment1, LINE_SEGMENT segment2, cv::Point2d *intersection = NULL);
+std::vector<std::vector<int>> nchoosek(int n, int k);
+double erf(double x);
+double erfc(double x);
+cv::Mat histogram(const cv::Mat singleChannelImage, int numBin);
+bool GetIntersection(const LINE_SEGMENT segment1, const LINE_SEGMENT segment2, cv::Point2d *intersection = NULL);
+double Triangulation(const LINE_SEGMENT_3D &line1, const LINE_SEGMENT_3D &line2, cv::Point3d &outputMidPoint3D);
 
 // string related
 std::string sprintf(const std::string fmt_str, ...);
@@ -51,7 +57,10 @@ std::vector<cv::Scalar> GenerateColors(int numColor);
 cv::Scalar hsv2bgr(double h, double s, double v);
 void alphaRectangle(cv::Mat &image, const cv::Rect rect, const cv::Scalar color, const double alpha = 0.2);
 cv::Mat MakeMatTile(std::vector<cv::Mat> *imageArray, unsigned int numRows, unsigned int numCols);
+
 }
+
+
 
 //()()
 //('')HAANJU.YOO

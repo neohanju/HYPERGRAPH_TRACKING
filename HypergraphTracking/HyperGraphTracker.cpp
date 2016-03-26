@@ -185,6 +185,7 @@ bool CHyperGraphTracker::LoadDetections(void)
 	if (!bInit_) { return false; }
 
 	numDetections_ = 0;
+	minDetectionHeight_ = DBL_MAX;
 
 	int vecIdx = 0;	
 	int numDetections = 0;
@@ -213,10 +214,10 @@ bool CHyperGraphTracker::LoadDetections(void)
 				{
 					CDetection newDetection;
 					fscanf_s(fid, "{\n\tROOT:{%f,%f,%f,%f}\n", &x, &y, &w, &h);
-					newDetection.id_       = numDetections_++;
-					newDetection.camIdx_   = cIdx;
-					newDetection.frameIdx_ = fIdx;
-					newDetection.rect_     = cv::Rect2d((double)x-1.0, (double)y-1.0, (double)w, (double)h);
+					newDetection.id_           = numDetections_++;
+					newDetection.camIdx_       = cIdx;
+					newDetection.frameIdx_     = fIdx;
+					newDetection.rect_         = cv::Rect2d((double)x-1.0, (double)y-1.0, (double)w, (double)h);
 					newDetection.bottomCenter_ = cv::Point2d((double)x-1.0 + 0.5*(double)w, (double)y - 1.0 + (double)h);
 					vecCamModels_[cIdx].imageToWorld(x-1.0, y-1.0, 0.0, newDetection.location3D_.x, newDetection.location3D_.y);
 
@@ -233,6 +234,9 @@ bool CHyperGraphTracker::LoadDetections(void)
 
 					listDetections_.push_back(newDetection);
 					vecvecPtDetectionSets_[vecIdx][cIdx][dIdx] = &listDetections_.back();
+
+					// minimum detection size
+					if (minDetectionHeight_ > (double)h) { minDetectionHeight_ = (double)h; }
 				}
 				fclose(fid);
 			}
@@ -268,121 +272,6 @@ bool CHyperGraphTracker::GenerateReconstructions(void)
 	return true;
 }
 
-/************************************************************************
- Method Name: LoadDetections
- Description: 
-   C_k = |R_k| log (beta / (1 - beta)) + (n(R_k) - |R_k| lob ((1 - gamma) / gamma) 
-	   + log ((1 - P_rec(R_k) / P_rec(R_k))
- Input Arguments:
-	- 
- Return Values:
-	- 
-************************************************************************/
-double CHyperGraphTracker::CalculateCost(const CReconstruction &targetReconstruction)
-{
-	double P_det = 0.0, P_rec = 0.5;
-
-	///////////////////////////////////////////////////////////
-	// DETECTION PROBABILITY
-	///////////////////////////////////////////////////////////
-
-
-	return 0.0;
-}
-
-/************************************************************************
- Method Name: LoadDetections
- Description: 
-	- 
- Input Arguments:
-	- 
- Return Values:
-	- 
-************************************************************************/
-double CHyperGraphTracker::CalculateCost(const CReconstruction &prevReconstruction, const CReconstruction &nextReconstruction)
-{
-	return 0.0;
-}
-
-/************************************************************************
- Method Name: GetDistanceFromBoundary
- Description: 
-	- 
- Input Arguments:
-	- 
- Return Values:
-	- 
-************************************************************************/
-double CHyperGraphTracker::GetDistanceFromBoundary(const CReconstruction &targetReconstruction)
-{
-	cv::Point2d curPoint;
-	double maxDistance = -100.0, curDistance = 0.0;
-	for (int cIdx = 0; cIdx < SET_.numCams(); cIdx++)
-	{
-		if (!CheckVisibility(targetReconstruction.location3D_(), cIdx, &curPoint)) { continue; }
-		curDistance = vecMatDistanceFromBoundary_[cIdx].at<float>((int)curPoint.y, (int)curPoint.x);
-		if (maxDistance < curDistance) { maxDistance = curDistance; }
-	}
-	return maxDistance;
-}
-
-/************************************************************************
- Method Name: GetNumVisibleCameras
- Description: 
-	- 
- Input Arguments:
-	- 
- Return Values:
-	- 
-************************************************************************/
-int CHyperGraphTracker::GetNumVisibleCameras(const cv::Point3d location)
-{
-
-}
-
-/************************************************************************
- Method Name: CheckVisibility
- Description: 
-	- return whether an input point can be seen at a specific camera
- Input Arguments:
-	- testPoint: a 3D point
-	- camIdx: camera index (for calibration information)
- Return Values:
-	- bool: visible(true)/un-visible(false)
-************************************************************************/
-bool CHyperGraphTracker::CheckVisibility(const cv::Point3d testPoint, int camIdx, cv::Point2d *result2DPoint)
-{
-	cv::Point2d reprojectedPoint;
-	vecCamModels_[camIdx].worldToImage(testPoint.x, testPoint.y, testPoint.z, reprojectedPoint.x, reprojectedPoint.y);
-	
-	//cv::Point2d reprojectedTopPoint = this->WorldToImage(PSN_Point3D(testPoint.x, testPoint.y, DEFAULT_HEIGHT), camIdx);
-
-	// pad in for detection probability, no pads for just finding the position of reprojected point
-	//double halfWidth = NULL == result2DPoint? (reprojectedTopPoint - reprojectedPoint).norm_L2() / 6 : 0.0;
-
-	if (NULL != result2DPoint) { *result2DPoint = reprojectedPoint; }
-	if (reprojectedPoint.x < halfWidth || reprojectedPoint.x >= (double)cCamModel_[camIdx].width() - halfWidth || 
-		reprojectedPoint.y < halfWidth || reprojectedPoint.y >= (double)cCamModel_[camIdx].height() - halfWidth)
-	{
-		return false;
-	}
-	return true;
-
-	//// http://stackoverflow.com/questions/11716268/point-in-polygon-algorithm
-	//bool cross = false;
-	//for (int i = 0, j = 3; i < 4; j = i++)
-	//{
-	//	if (((pFieldOfView[camIdx][i].y >= testPoint.y) != (pFieldOfView[camIdx][j].y >= testPoint.y)) && 
-	//		(testPoint.x <= (pFieldOfView[camIdx][j].x - pFieldOfView[camIdx][i].x) * 
-	//		(testPoint.y - pFieldOfView[camIdx][i].y) / 
-	//		(pFieldOfView[camIdx][j].y - pFieldOfView[camIdx][i].y) + pFieldOfView[camIdx][i].x))
-	//	{
-	//		cross = !cross;
-	//	}
-	//}
-
-	//return cross;
-}
 
 
 //()()

@@ -491,7 +491,7 @@ bool CameraModel::fromDat(std::istream& is, int width, int height)
     
 }
 
-bool CameraModel::imageToWorld(double Xi, double Yi, double Zw, double& Xw, double& Yw)
+bool CameraModel::imageToWorld(double Xi, double Yi, double Zw, double& Xw, double& Yw) const
 {
 	double Xd;
 	double Yd;
@@ -532,7 +532,7 @@ bool CameraModel::imageToWorld(double Xi, double Yi, double Zw, double& Xw, doub
 	return true;
 }
 
-void CameraModel::distortedToUndistortedSensorCoord (double Xd, double Yd, double& Xu, double& Yu)
+void CameraModel::distortedToUndistortedSensorCoord (double Xd, double Yd, double& Xu, double& Yu) const
 {
 	double    distortion_factor;
 	
@@ -542,7 +542,7 @@ void CameraModel::distortedToUndistortedSensorCoord (double Xd, double Yd, doubl
 	Yu = Yd * distortion_factor;
 }
 
-bool CameraModel::worldToImage(double Xw, double Yw, double Zw, double& Xi, double& Yi)
+bool CameraModel::worldToImage(double Xw, double Yw, double Zw, double& Xi, double& Yi) const
 {
 	bool done = false;
 	double xc;
@@ -576,7 +576,7 @@ bool CameraModel::worldToImage(double Xw, double Yw, double Zw, double& Xi, doub
 	return done;
 }
 
-void CameraModel::undistortedToDistortedSensorCoord (double Xu, double Yu, double& Xd, double& Yd)
+void CameraModel::undistortedToDistortedSensorCoord (double Xu, double Yu, double& Xd, double& Yd) const
 {
 	double Ru;
 	double Rd;

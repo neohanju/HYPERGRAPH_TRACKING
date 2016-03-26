@@ -116,6 +116,14 @@ bool CSetting::LoadSetting(const char *strSettingPath)
 		{
 			strResultPath_ = params[paramIdx].second;
 		}
+		else if (0 == params[paramIdx].first.compare("P_EN_TAU"))
+		{
+			paramHGT_.P_EN_TAU = std::stod(params[paramIdx].second);
+		}
+		else if (0 == params[paramIdx].first.compare("P_EX_TAU"))
+		{
+			paramHGT_.P_EX_TAU = std::stod(params[paramIdx].second);
+		}
 	}
 
 	if (0 == strDatasetBasePath.size() || 0 == numCams_)

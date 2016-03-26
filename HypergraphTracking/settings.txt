@@ -21,7 +21,11 @@ RESULT_SAVE_PATH=D:/Workspace/ExperimentalResult
 % ground truth
 GROUND_TRUTH_PATH=groundTruth/cropped.txt
 
-% reconstruction parameters
+%======================================
+% COST DESIGN PARAMETERS
+%======================================
+P_EN_TAU=1000.0
+P_EX_TAU=1000.0
 
 
 %()()
