@@ -96,6 +96,11 @@ bool CHyperGraphTracker::Initialize(const CSetting &SET)
 		vecvecPtDetectionSets_[fIdx].resize(SET_.numCams());
 	}
 
+	///////////////////////////////////////////////////////////
+	// RECONSTRUCTION INITIALIZATION
+	///////////////////////////////////////////////////////////	
+	numReconstructions_ = 0;
+
 	return true;
 }
 
@@ -153,7 +158,8 @@ bool CHyperGraphTracker::Finalize(void)
 ************************************************************************/
 bool CHyperGraphTracker::ConstructHyperGraph(void)
 {
-
+	LoadDetections();
+	GenerateReconstructions();
 	return true;
 }
 
@@ -219,7 +225,8 @@ bool CHyperGraphTracker::LoadDetections(void)
 					newDetection.frameIdx_     = fIdx;
 					newDetection.rect_         = cv::Rect2d((double)x-1.0, (double)y-1.0, (double)w, (double)h);
 					newDetection.bottomCenter_ = cv::Point2d((double)x-1.0 + 0.5*(double)w, (double)y - 1.0 + (double)h);
-					vecCamModels_[cIdx].imageToWorld(x-1.0, y-1.0, 0.0, newDetection.location3D_.x, newDetection.location3D_.y);
+					vecCamModels_[cIdx].imageToWorld(newDetection.bottomCenter_.x, newDetection.bottomCenter_.y, 
+						0.0, newDetection.location3D_.x, newDetection.location3D_.y);
 
 					// read part info			
 					for (unsigned int partIdx = 0; partIdx < NUM_DPM_PARTS; partIdx++)
@@ -261,17 +268,69 @@ bool CHyperGraphTracker::LoadDetections(void)
  Return Values:
 	- 
 ************************************************************************/
-bool CHyperGraphTracker::GenerateReconstructions(void)
+void CHyperGraphTracker::GenerateReconstructions(void)
 {
-	for (int tIdx = 0; tIdx < vecvecPtDetectionSets_.size(); tIdx++)
+	vecvecPtReconstructions_.clear();
+	vecvecPtReconstructions_.resize(vecvecPtDetectionSets_.size());
+	for (int fIdx = 0; fIdx < vecvecPtDetectionSets_.size(); fIdx++)
 	{
 		// generate combinations
+		DetectionSet nullSet(SET_.numCams(), NULL);		
+		std::deque<DetectionSet> detectionCombinations;
+		GenerateDetectionCombinations(nullSet, 0, vecvecPtDetectionSets_[fIdx], detectionCombinations);
 
-		// 
+		vecvecPtReconstructions_[fIdx].reserve(detectionCombinations.size());
+		for (int combIdx = 0; combIdx < detectionCombinations.size(); combIdx++)
+		{
+			CReconstruction newReconstruction(detectionCombinations[combIdx], 
+				                              vecCamModels_, 
+											  vecMatProjectionSensitivity_, 
+											  vecMatDistanceFromBoundary_, 
+											  P_FP, P_FN[SET_.GetScenarioNumber()], 
+											  SET_.GetParamHGT()->P_EN_TAU, SET_.GetParamHGT()->P_EX_TAU, 
+											  minDetectionHeight_);
+			if (!newReconstruction.bValid_) { continue; }
+			newReconstruction.id_ = numReconstructions_++;
+			listReconstructions_.push_back(newReconstruction);
+			vecvecPtReconstructions_[fIdx].push_back(&listReconstructions_.back());
+		}
 	}
-	return true;
 }
 
+/************************************************************************
+ Method Name: GenerateTrackletCombinations
+ Description: 
+	- Generate feasible 2D tracklet combinations
+ Input Arguments:
+	- combination: current combination
+	- entireDetectionsAtEachCame: detection pools of each camera for combination
+	- combinationQueue: queue for save combinations
+	- camIdx: current camera index
+ Return Values:
+	- none
+************************************************************************/
+void CHyperGraphTracker::GenerateDetectionCombinations(DetectionSet curCombination,
+													   const int curCamIdx,
+													   const std::vector<DetectionSet> &entireDetectionsAtEachCame,
+													   std::deque<DetectionSet> &outputCombinationQueue)
+{
+	if (curCamIdx >= SET_.numCams())
+	{
+		outputCombinationQueue.push_back(curCombination);
+		return;
+	}
+
+	// for missing detection
+	curCombination[curCamIdx] = NULL;
+	GenerateDetectionCombinations(curCombination, curCamIdx+1, entireDetectionsAtEachCame, outputCombinationQueue);
+
+	// iteratively generate combinations
+	for (int dIdx = 0; dIdx < entireDetectionsAtEachCame[curCamIdx].size(); dIdx++)
+	{
+		curCombination[curCamIdx] = entireDetectionsAtEachCame[curCamIdx][dIdx];
+		GenerateDetectionCombinations(curCombination, curCamIdx+1, entireDetectionsAtEachCame, outputCombinationQueue);
+	}
+}
 
 
 //()()

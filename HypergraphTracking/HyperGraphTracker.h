@@ -19,13 +19,15 @@ public:
 	bool Initialize(const CSetting &SET);
 	bool Finalize(void);
 	bool ConstructHyperGraph(void);
-
-	bool LoadGraph(const std::string strGraphPath);
-	bool LoadDetections(void);
-	bool GenerateReconstructions(void);
-	
+	bool LoadGraph(const std::string strGraphPath);		
 
 private:
+	bool LoadDetections(void);
+	void GenerateReconstructions(void);
+	void GenerateDetectionCombinations(DetectionSet curCombination, 
+		                               const int curCamIdx, 
+									   const std::vector<DetectionSet> &entireDetectionsAtEachCame,
+									   std::deque<DetectionSet> &outputCombinationQueue);
 
 	//////////////////////////////////////////////////////////////////////////
 	// VARIABLES
@@ -42,6 +44,7 @@ private:
 	std::vector<std::vector<CReconstruction*>> vecvecPtReconstructions_; // frame / reconstruction
 
 	int numDetections_;
+	int numReconstructions_;
 	double minDetectionHeight_;
 };
 

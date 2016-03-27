@@ -3,8 +3,8 @@
 
 inline double functionF(double d, double dmin, double dmax) { return 0.5 * hj::erfc(4.0 * (d - dmin) / (dmax - dmin) - 2.0); }
 
-CReconstruction::CReconstruction(const DetectionSet detections,
-								 const std::vector<Etiseo::CameraModel> vecCamModels,
+CReconstruction::CReconstruction(const DetectionSet &detections,
+								 const std::vector<Etiseo::CameraModel> &vecCamModels,
 								 const std::vector<cv::Mat> &vecMatProjectionSensitivity,
 								 const std::vector<cv::Mat> &vecMatDistanceFromBoundary,
 								 const double fpRatio, const double fnRatio,
@@ -33,7 +33,8 @@ CReconstruction::CReconstruction(const DetectionSet detections,
 		frameIdx_    = detections_[cIdx]->frameIdx_;
 		location3D_ += detections_[cIdx]->location3D_;
 		numDetections_++;
-	}
+	}	
+	if (0 == numDetections_) { return; } // check nullity of detections
 	location3D_ /= (double)numDetections_;
 
 	// get reconstruction probability
@@ -54,8 +55,8 @@ CReconstruction::CReconstruction(const DetectionSet detections,
 		for (int cIdx = 0; cIdx < numCameras; cIdx++)
 		{
 			if (NULL == detections_[cIdx]) { continue; }
-			eps_max += vecMatProjectionSensitivity[cIdx].at<double>((int)detections_[cIdx]->bottomCenter_.y, 
-																	(int)detections_[cIdx]->bottomCenter_.x);
+			eps_max += vecMatProjectionSensitivity[cIdx].at<float>((int)detections_[cIdx]->bottomCenter_.y, 
+																   (int)detections_[cIdx]->bottomCenter_.x);
 		}
 		eps_max = EPS_DET * eps_max + EPS_CAL;
 

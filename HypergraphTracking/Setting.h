@@ -16,11 +16,12 @@ public:
 	int  endFrameIdx(void)   { return endFrameIdx_; }
 	int  numFrames(void)  { return numFrames_; }
 	int  GetCamIdx(int idx)  { return cameraIdxs_[idx]; }
-	std::string GetDatasetPath(void)         { return strDatasetPath_; }
+	std::string GetDatasetPath(void)         { return strDatasetPath_; }	
 	std::string GetCalibrationPath(void)     { return strCalibrationPath_; }
 	std::string GetResultPath(void)          { return strResultPath_; }
 	std::string GetViewPath(int camIdx)      { return vecStrViewPaths_[camIdx]; }
 	std::string GetDetectionPath(int camIdx) { return vecStrDetectionPaths_[camIdx]; }
+	PETS_SCENARIO GetScenarioNumber(void)    { return scenarioNumber_; }
 	stHypergraphTrackingParams* GetParamHGT(void) { return &paramHGT_; }
 
 private:
@@ -29,6 +30,7 @@ private:
 private:
 	bool bInit_;
 	int numCams_;
+	PETS_SCENARIO scenarioNumber_;
 	int startFrameIdx_;
 	int endFrameIdx_;
 	int numFrames_;

@@ -14,12 +14,12 @@ const char DELIM_ARRAY = ',';
 const int  MAX_CHARS_PER_LINE = 10240;
 
 CSetting::CSetting(void)
-	: bInit_(false), numCams_(0), startFrameIdx_(0), endFrameIdx_(0), numFrames_(0)
+	: bInit_(false), numCams_(0), scenarioNumber_(PETS_S2L1), startFrameIdx_(0), endFrameIdx_(0), numFrames_(0)
 {
 }
 
 CSetting::CSetting(const char *strSettingPath)
-	: bInit_(false), numCams_(0), startFrameIdx_(0), endFrameIdx_(0), numFrames_(0)
+	: bInit_(false), numCams_(0), scenarioNumber_(PETS_S2L1), startFrameIdx_(0), endFrameIdx_(0), numFrames_(0)
 {
 	LoadSetting(strSettingPath);
 }
@@ -133,15 +133,14 @@ bool CSetting::LoadSetting(const char *strSettingPath)
 	}
 
 	
-	// scenario and frame indices
-	PETS_SCENARIO curScenario;
-	if      (0 == strDatasetScenario_.compare("L1")) { curScenario = PETS_S2L1; }
-	else if (0 == strDatasetScenario_.compare("L2")) { curScenario = PETS_S2L2; }	
-	else if (0 == strDatasetScenario_.compare("L3")) { curScenario = PETS_S2L3; }
+	// scenario and frame indices	
+	if      (0 == strDatasetScenario_.compare("L1")) { scenarioNumber_ = PETS_S2L1; }
+	else if (0 == strDatasetScenario_.compare("L2")) { scenarioNumber_ = PETS_S2L2; }	
+	else if (0 == strDatasetScenario_.compare("L3")) { scenarioNumber_ = PETS_S2L3; }
 		
-	strDatasetPath_ = hj::fullfile(strDatasetBasePath, SCENARIO_PATH[curScenario]);
-	startFrameIdx_  = startFrameIdx < 0 ? START_FRAME_INDICES[curScenario] : startFrameIdx;
-	endFrameIdx_    = endFrameIdx   < 0 ? END_FRAME_INDICES[curScenario]   : endFrameIdx;
+	strDatasetPath_ = hj::fullfile(strDatasetBasePath, SCENARIO_PATH[scenarioNumber_]);
+	startFrameIdx_  = startFrameIdx < 0 ? START_FRAME_INDICES[scenarioNumber_] : startFrameIdx;
+	endFrameIdx_    = endFrameIdx   < 0 ? END_FRAME_INDICES[scenarioNumber_]   : endFrameIdx;
 	numFrames_      = endFrameIdx_ - startFrameIdx_ + 1;
 
 	// calibration path

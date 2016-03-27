@@ -7,7 +7,7 @@ CAMERA_INDICES=1,5,7
 
 % frame indices
 %START_FRAME_IDX=0
-%END_FRAME_IDX=0
+END_FRAME_IDX=30
 
 % calibration path
 CALIBRATION_PATH=calibrationInfos

@@ -9,8 +9,8 @@ class CReconstruction
 	// METHODS
 	//////////////////////////////////////////////////////////////////////////
 public:
-	CReconstruction(const DetectionSet detections,
-		            const std::vector<Etiseo::CameraModel> vecCamModels,
+	CReconstruction(const DetectionSet &detections,
+		            const std::vector<Etiseo::CameraModel> &vecCamModels,
 					const std::vector<cv::Mat> &vecMatProjectionSensitivity,
 					const std::vector<cv::Mat> &vecMatDistanceFromBoundary,
 					const double fpRatio, const double fnRatio,
