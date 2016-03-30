@@ -14,8 +14,9 @@ public:
 	int  numCams(void)       { return numCams_; }
 	int  startFrameIdx(void) { return startFrameIdx_; }
 	int  endFrameIdx(void)   { return endFrameIdx_; }
-	int  numFrames(void)  { return numFrames_; }
+	int  numFrames(void)     { return numFrames_; }
 	int  GetCamIdx(int idx)  { return cameraIdxs_[idx]; }
+	int  dispTrajectoryLength(void) { return dispTrajectoryLength_; }
 	std::string GetDatasetPath(void)         { return strDatasetPath_; }	
 	std::string GetCalibrationPath(void)     { return strCalibrationPath_; }
 	std::string GetResultPath(void)          { return strResultPath_; }
@@ -43,5 +44,8 @@ private:
 	std::vector<std::string> vecStrViewPaths_;
 	std::vector<std::string> vecStrDetectionPaths_;
 	stHypergraphTrackingParams paramHGT_;
+
+	// visualization
+	int dispTrajectoryLength_;
 };
 

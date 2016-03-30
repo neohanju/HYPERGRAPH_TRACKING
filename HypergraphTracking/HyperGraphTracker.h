@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Detection.h"
-#include "Reconstruction.h"
+#include "Track.h"
 #include "Setting.h"
 
 #include <vector>
 #include <list>
 
+class GRBEnv;
 class CHyperGraphTracker
 {
 	//////////////////////////////////////////////////////////////////////////
@@ -18,10 +18,12 @@ public:
 
 	bool Initialize(const CSetting &SET);
 	bool Finalize(void);
-	bool ConstructHyperGraph(void);
-	bool LoadGraph(const std::string strGraphPath);		
+	bool Run(void);
+	void Visualization(void);
 
 private:
+	bool ConstructGraphAndSolving(void);
+	bool LoadGraph(const std::string strGraphPath);
 	bool LoadDetections(void);
 	void GenerateReconstructions(void);
 	void GenerateDetectionCombinations(DetectionSet curCombination, 
@@ -41,11 +43,19 @@ private:
 	std::list<CDetection> listDetections_;
 	std::list<CReconstruction> listReconstructions_;
 	std::vector<std::vector<DetectionSet>> vecvecPtDetectionSets_;      // frame / cam / detection
-	std::vector<std::vector<CReconstruction*>> vecvecPtReconstructions_; // frame / reconstruction
+	std::vector<ReconstructionSet> vecvecPtReconstructions_; // frame / reconstruction	
+	ReconstructionSet vecPtReconstructions_; // for fast access at the end of graph solving
+	std::deque<CTrack> queueTracks_;
+	std::vector<std::deque<std::pair<int, cv::Rect>>> vecQueueRectsOnTime_;
 
 	int numDetections_;
 	int numReconstructions_;
 	double minDetectionHeight_;
+
+	// optimization related
+	GRBEnv *pGRBEnv_;
+	double timeProblemConstruction_;
+	double timeProblemSolving_;
 };
 
 //()()

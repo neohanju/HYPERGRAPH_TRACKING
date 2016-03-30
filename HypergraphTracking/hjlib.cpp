@@ -1,6 +1,7 @@
 #include "hjlib.h"
 #include <stdarg.h>  // For va_start, etc.
 #include <memory>    // For std::unique_ptr
+#include <time.h>
 
 /////////////////////////////////////////////////////////////////////////
 // PREDEFINE
@@ -115,9 +116,9 @@ cv::Mat ReadMatrix(const std::string strFilePath)
 		fscanf_s(fp, "row:%d,col:%d\n", &numRows, &numCols);
 		matRead = cv::Mat::zeros(numRows, numCols, CV_32FC1);
 
-		for(unsigned int rowIdx = 0; rowIdx < (unsigned int)numRows; rowIdx++)
+		for(int rowIdx = 0; rowIdx < numRows; rowIdx++)
 		{
-			for(unsigned int colIdx = 0; colIdx < (unsigned int)numCols; colIdx++)
+			for(int colIdx = 0; colIdx < numCols; colIdx++)
 			{
 				fscanf_s(fp, "%f,", &curSensitivity);
 				matRead.at<float>(rowIdx, colIdx) = curSensitivity;
@@ -740,6 +741,31 @@ cv::Mat MakeMatTile(std::vector<cv::Mat> *imageArray, unsigned int numRows, unsi
 	}
 
 	return resultMat;
+}
+
+void printTime(double secs_)
+{
+	int days, hours, mins, secs, rems;
+	secs  = (int)secs_;
+	days  = (int)(secs / 86400);
+	rems  = secs % 86400;
+	hours = (int)(rems / 3600);
+	rems  = rems % 3600;	
+	mins  = (int)(rems / 60);
+	printf("%d days %02d:%02d:%05.2f", days, hours, mins, fmod(secs_, 60.0));
+}
+
+const std::string currentDateTime()
+{
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];    
+	localtime_s(&tstruct, &now);
+    // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
+    // for more information about date/time format
+    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+
+    return buf;
 }
 
 }

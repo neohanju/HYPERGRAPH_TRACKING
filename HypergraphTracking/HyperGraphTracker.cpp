@@ -1,8 +1,12 @@
 #include "HyperGraphTracker.h"
+#include "Linkage.h"
 #include "hjlib.h"
+#include "gurobi_c++.h"
+#include "opencv2\highgui\highgui.hpp"
+#include <time.h>
 
 CHyperGraphTracker::CHyperGraphTracker()
-	: bInit_(false)
+	: bInit_(false), pGRBEnv_(NULL)
 {
 }
 
@@ -58,7 +62,7 @@ bool CHyperGraphTracker::Initialize(const CSetting &SET)
 		std::string strProjectionMatrix = 
 			hj::fullfile(SET_.GetCalibrationPath(), hj::sprintf("ProjectionSensitivity_View%03d.txt", SET_.GetCamIdx(cIdx)));
 		if (!vecMatProjectionSensitivity_[cIdx].empty()) { vecMatProjectionSensitivity_[cIdx].release(); };
-		vecMatProjectionSensitivity_[cIdx] = hj::ReadMatrix(strProjectionMatrix);
+		vecMatProjectionSensitivity_[cIdx] = hj::ReadMatrix(strProjectionMatrix);		
 		if (vecMatProjectionSensitivity_[cIdx].empty())
 		{
 			std::cout << " fail" << std::endl;
@@ -100,6 +104,29 @@ bool CHyperGraphTracker::Initialize(const CSetting &SET)
 	// RECONSTRUCTION INITIALIZATION
 	///////////////////////////////////////////////////////////	
 	numReconstructions_ = 0;
+
+	///////////////////////////////////////////////////////////
+	// (GUROBI) SOLVER INITIALIZATION
+	///////////////////////////////////////////////////////////	
+	try 
+	{
+		if(NULL == pGRBEnv_)
+		{
+			pGRBEnv_ = new GRBEnv();
+			pGRBEnv_->set(GRB_IntParam_LogToConsole, 0);
+		}
+	} 
+	catch (GRBException e) 
+	{
+		std::cout << "[ERROR] (GUROBI) Error code = " << e.getErrorCode() << std::endl;
+		std::cout << e.getMessage() << std::endl;
+		return false;
+	}
+
+	///////////////////////////////////////////////////////////
+	// VISUALIZATION
+	///////////////////////////////////////////////////////////	
+	vecQueueRectsOnTime_.resize(SET_.numFrames());
 
 	return true;
 }
@@ -144,22 +171,402 @@ bool CHyperGraphTracker::Finalize(void)
 	vecvecPtDetectionSets_.clear();
 	vecvecPtReconstructions_.clear();
 
+	///////////////////////////////////////////////////////////
+	// (GUROBI) SOLVER FINALIZATION
+	///////////////////////////////////////////////////////////
+	try 
+	{
+		if(NULL != pGRBEnv_)
+		{
+			delete pGRBEnv_;
+		}
+	} 
+	catch(GRBException e) 
+	{
+		std::cout << "[ERROR] (GUROBI) Error code = " << e.getErrorCode() << std::endl;
+		std::cout << e.getMessage() << std::endl;
+		return false;
+	}
+
 	return true;
 }
 
 /************************************************************************
- Method Name: ConstructHyperGraph
+ Method Name: Run
  Description: 
-	- construct hypergraph for 3D tracking
+	- 
+ Input Arguments:
+	- none
+ Return Values:
+	- 
+************************************************************************/
+bool CHyperGraphTracker::Run(void)
+{
+	if (!bInit_) { return false; }
+	if (!LoadDetections()) { return false; }
+	if (!ConstructGraphAndSolving()) { return false; }
+	return true;
+}
+
+/************************************************************************
+ Method Name: Run
+ Description: 
+	- 
+ Input Arguments:
+	- none
+ Return Values:
+	- 
+************************************************************************/
+void CHyperGraphTracker::Visualization(void)
+{
+	int imageFrameIdx = SET_.startFrameIdx();
+	std::vector<cv::Scalar> COLORS = hj::GenerateColors((int)queueTracks_.size());
+	cv::Mat inputFrame;
+	for (int fIdx = 0; fIdx < SET_.numFrames(); fIdx++, imageFrameIdx++)
+	{
+		inputFrame = cv::imread(hj::fullfile(SET_.GetViewPath(0), hj::sprintf("frame_%04d.jpg", imageFrameIdx)));
+		
+		// writing frame info
+		char strFrameInfo[100];
+		sprintf_s(strFrameInfo, "Frame: %04d", imageFrameIdx);
+		cv::rectangle(inputFrame, cv::Rect(5, 2, 145, 22), cv::Scalar(0, 0, 0), CV_FILLED);
+		cv::putText(inputFrame, strFrameInfo, cv::Point(6, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255));
+		
+		// draw rectangles
+		for (int rectIdx = 0; rectIdx < vecQueueRectsOnTime_[fIdx].size(); rectIdx++)
+		{
+			int trackId = vecQueueRectsOnTime_[fIdx][rectIdx].first;
+			cv::Rect *curRect = &vecQueueRectsOnTime_[fIdx][rectIdx].second;
+			cv::rectangle(inputFrame, vecQueueRectsOnTime_[fIdx][rectIdx].second, COLORS[trackId], 2);
+			cv::putText(inputFrame, std::to_string(trackId), cv::Point(curRect->x, curRect->y+40), cv::FONT_HERSHEY_SIMPLEX, 1.0, COLORS[trackId]);
+
+			// draw trajectory
+			int curIdx = fIdx - queueTracks_[trackId].timeStart_;			
+			cv::Point2d curPoint, prePoint;
+			vecCamModels_[0].worldToImage(queueTracks_[trackId].locations_[curIdx].x, 
+				                          queueTracks_[trackId].locations_[curIdx].y, 
+										  queueTracks_[trackId].locations_[curIdx].z,
+										  curPoint.x, curPoint.y);
+			for (int preLocIdx = curIdx-1; preLocIdx >= std::max(0, curIdx - SET_.dispTrajectoryLength()+1); preLocIdx--)
+			{
+				vecCamModels_[0].worldToImage(queueTracks_[trackId].locations_[preLocIdx].x, 
+				                              queueTracks_[trackId].locations_[preLocIdx].y,
+											  queueTracks_[trackId].locations_[preLocIdx].z,
+											  prePoint.x, prePoint.y);
+				cv::line(inputFrame, curPoint, prePoint, COLORS[trackId], 2);
+				curPoint = prePoint;
+			}
+		}
+
+		cv::imshow("result", inputFrame);
+		cv::waitKey(0);
+	}
+
+	cv::destroyAllWindows();
+}
+
+/************************************************************************
+ Method Name: ConstructGraphAndSolving
+ Description: 
+	- construct hypergraph for 3D tracking and solving
  Input Arguments:
 	- none
  Return Values:
 	- bool variable indicating the proper construction of the graph
 ************************************************************************/
-bool CHyperGraphTracker::ConstructHyperGraph(void)
+bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 {
-	LoadDetections();
+	printf("Constructing graph...\n");
+	time_t timeStart = time(0);
+
+	///////////////////////////////////////////////////////////
+	// GENERATE RECONSTRUCTION
+	///////////////////////////////////////////////////////////	
 	GenerateReconstructions();
+
+	if (NULL == pGRBEnv_) { return false; }
+	try
+	{
+		///////////////////////////////////////////////////////////
+		// GRAPH CONSTRUCTION
+		///////////////////////////////////////////////////////////	
+
+		// generate model
+		GRBModel model = GRBModel(*pGRBEnv_);			
+		GRBLinExpr linExprObjective = 0;			
+		std::deque<GRBVar> grbVarReconstruction;
+		std::deque<GRBVar> grbVarStarting;
+		std::deque<GRBVar> grbVarEnding;
+		std::deque<GRBVar> grbVarLinking;
+		std::vector<GRBLinExpr> vecGRBConstraints;
+		std::vector<std::string> vecGRBContsNames;		
+		queueTracks_.clear();
+		char strName[100];
+		int numIncompatibleConsts = 0;
+		
+		//---------------------------------------------------------
+		// RECONSTRUCTION EDGES / INCOMPATIBILITY CONDITIONS
+		//---------------------------------------------------------
+		for (int fIdx = 0; fIdx < vecvecPtReconstructions_.size(); fIdx++)
+		{
+			printf("\r Generate reconstruction edges at frame %04d/%04d ... ", fIdx+1, SET_.numFrames());
+			for (int rIdx = 0; rIdx < vecvecPtReconstructions_[fIdx].size(); rIdx++)
+			{
+				CReconstruction *curReconstruction = vecvecPtReconstructions_[fIdx][rIdx];
+				
+				sprintf_s(strName, "reconstruction_%d", curReconstruction->id_);
+				grbVarReconstruction.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, strName));
+
+				sprintf_s(strName, "starting_%d", curReconstruction->id_);
+				grbVarStarting.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, strName));
+				double costEnter = 0 == fIdx? -std::log(P_EN_MAX) : curReconstruction->costEnter_;
+				
+				sprintf_s(strName, "ending_%d", curReconstruction->id_);
+				grbVarEnding.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, strName));
+				double costExit = vecvecPtReconstructions_[fIdx].size() - 1 == fIdx? -std::log(P_EX_MAX) : curReconstruction->costExit_;
+
+				// objective
+				linExprObjective += curReconstruction->costReconstruction_ * grbVarStarting.back()
+					              + costEnter * grbVarStarting.back()
+					              + costExit * grbVarEnding.back();
+
+				// generate incompatibility constraint
+				for (int compRIdx = 0; compRIdx < rIdx; compRIdx++)
+				{
+					if (CReconstruction::IsCompatible(*curReconstruction, *vecvecPtReconstructions_[fIdx][compRIdx]))
+					{ 
+						continue;
+					}					
+					sprintf_s(strName, "incompatibility_%d", numIncompatibleConsts++);
+					vecGRBContsNames.push_back(strName);
+					vecGRBConstraints.push_back(grbVarReconstruction.back() 
+						                       + grbVarReconstruction[vecvecPtReconstructions_[fIdx][compRIdx]->id_] 
+					                           - 1.0);
+				}
+			}			
+		}
+		printf("done\n");
+
+		//---------------------------------------------------------
+		// LINKING EDGES
+		//---------------------------------------------------------		
+		std::vector<std::deque<CLinkage>> vecQueueLinkingEdges(vecPtReconstructions_.size());
+		std::vector<std::deque<int>> vecQueueLinkTo(vecPtReconstructions_.size());
+		std::vector<std::deque<int>> vecQueueLinkFrom(vecPtReconstructions_.size());
+		int linkId = 0;
+		for (int fIdx = 0; fIdx < vecvecPtReconstructions_.size()-1; fIdx++)
+		{
+			printf("\r Generate linking edges at frame %04d/%04d ... ", fIdx+1, SET_.numFrames()-1);
+			for (int jumpFIdx = fIdx + 1; jumpFIdx < std::min(fIdx + DELTA_T_MAX + 1, (int)vecvecPtReconstructions_.size()); jumpFIdx++)
+			{
+				for (int prevRIdx = 0; prevRIdx < vecvecPtReconstructions_[fIdx].size(); prevRIdx++)
+				{
+					for (int nextRIdx = 0; nextRIdx < vecvecPtReconstructions_[jumpFIdx].size(); nextRIdx++)
+					{
+						CLinkage newLink;						
+						newLink.cost_ = CReconstruction::GetTransitionCost(
+							*vecvecPtReconstructions_[fIdx][prevRIdx],
+							*vecvecPtReconstructions_[jumpFIdx][nextRIdx],
+							DELTA_T_MAX, P_FN[SET_.GetScenarioNumber()]);
+
+						if (DBL_MAX == newLink.cost_) { continue; }
+						newLink.id_   = linkId++;
+						newLink.from_ = vecvecPtReconstructions_[fIdx][prevRIdx]->id_;
+						newLink.to_   = vecvecPtReconstructions_[jumpFIdx][nextRIdx]->id_;
+
+						// add variable
+						sprintf_s(strName, "linking_%d", linkId);
+						grbVarLinking.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, strName));
+
+						// objective
+						linExprObjective += newLink.cost_ * grbVarLinking.back();						
+
+						// for constraints
+						vecQueueLinkTo[newLink.from_].push_back(newLink.id_);
+						vecQueueLinkFrom[newLink.to_].push_back(newLink.id_);
+
+						// for track construction
+						vecQueueLinkingEdges[newLink.from_].push_back(newLink);
+					}
+				}
+			}
+		}
+		printf("done\n");
+
+		// flux conservation
+		for (int rIdx = 0; rIdx < vecPtReconstructions_.size(); rIdx++)
+		{
+			printf("\r Generate flux conservation constraints with reconstruction %04d/%04d ... ", rIdx+1, vecPtReconstructions_.size());
+			sprintf_s(strName, "fluxConservation_%d", rIdx);
+			vecGRBContsNames.push_back(strName);
+			sprintf_s(strName, "fluxInitiation_%d", rIdx);
+			vecGRBContsNames.push_back(strName);
+			GRBLinExpr curFluxConsExpression = grbVarStarting[rIdx] - grbVarEnding[rIdx];
+			GRBLinExpr curFluxInitExpression = grbVarStarting[rIdx] - grbVarReconstruction[rIdx];
+			for (int linkIdx = 0; linkIdx < vecQueueLinkFrom[rIdx].size(); linkIdx++)
+			{
+				curFluxConsExpression += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];
+				curFluxInitExpression += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];
+			}
+			for (int linkIdx = 0; linkIdx < vecQueueLinkTo[rIdx].size(); linkIdx++)
+			{
+				curFluxConsExpression += -grbVarLinking[vecQueueLinkTo[rIdx][linkIdx]];
+			}			
+			vecGRBConstraints.push_back(curFluxConsExpression);
+			vecGRBConstraints.push_back(curFluxInitExpression);
+		}	
+		printf("done\n");
+				
+
+		// set variables and objective (lazy update)
+		model.update();
+		model.setObjective(linExprObjective, GRB_MINIMIZE);	// min cost
+
+		// set constraints (with sense symbols)
+		GRBConstr *addedConstr = NULL;
+		if (vecGRBContsNames.size() > 0)
+		{
+			char *arrGRBSenses = new char[vecGRBContsNames.size()];
+			double *arrGRBRHSVals = new double[vecGRBContsNames.size()];
+			memset(arrGRBRHSVals, 0, sizeof(double) * (int)vecGRBContsNames.size());
+
+			// incompatibility
+			memset(arrGRBSenses, GRB_LESS_EQUAL, sizeof(char) * (int)vecGRBContsNames.size());
+			// flux
+			for (int senseIdx = numIncompatibleConsts; senseIdx < vecGRBContsNames.size(); senseIdx++)
+			{
+				arrGRBSenses[senseIdx] = GRB_EQUAL;
+			}
+
+			addedConstr = model.addConstrs(&vecGRBConstraints[0], arrGRBSenses, arrGRBRHSVals, &vecGRBContsNames[0], (int)vecGRBContsNames.size());				
+			delete arrGRBSenses;
+			delete arrGRBRHSVals;
+		}
+		vecGRBConstraints.clear();
+		vecGRBContsNames.clear();
+
+		// elapsed time
+		timeProblemConstruction_ = difftime(time(0), timeStart);
+		
+		///////////////////////////////////////////////////////////
+		// SOLVING
+		///////////////////////////////////////////////////////////			
+		int optimStatus;
+		unsigned int numSolution = 0;		
+
+		//---------------------------------------------------------
+		// OPTIMIZATION
+		//-----------------------------------------------------------
+		printf("Solving graph...");
+		timeStart = time(0);
+		model.optimize();
+		optimStatus = model.get(GRB_IntAttr_Status);
+		numSolution = model.get(GRB_IntAttr_SolCount);
+		if (GRB_OPTIMAL != optimStatus || 0 == numSolution)
+		{
+			// cannot find sufficient solutions
+			printf("[ERROR](graph solving) optimization stopped!\n");
+			return false;
+		}
+		timeProblemSolving_ = difftime(time(0), timeStart);
+		printf("done\n");
+		
+		//---------------------------------------------------------
+		// SOLUTION PARSING AND TRACK GENERATION
+		//-----------------------------------------------------------
+		// generate new (sub) global hypothesis
+		std::vector<ReconstructionSet> vecSelectedReconstructions(vecvecPtReconstructions_.size());
+
+		// find starting reconstructions		
+		ReconstructionSet vecStartingReconstructions;
+		for (int varIdx = 0; varIdx < grbVarStarting.size(); varIdx++)
+		{
+			if (0 == grbVarStarting[varIdx].get(GRB_DoubleAttr_Xn)) { continue; }
+			vecStartingReconstructions.push_back(vecPtReconstructions_[varIdx]);
+		}
+
+		// construction track		
+		for (int trackIdx = 0; trackIdx < vecStartingReconstructions.size(); trackIdx++)
+		{
+			CTrack newTrack(trackIdx, vecStartingReconstructions[trackIdx]->frameIdx_);	
+			CReconstruction* nextReconstruction = vecStartingReconstructions[trackIdx];
+			newTrack.cost_ = nextReconstruction->costEnter_;
+			bool bNextFound = false;
+			do
+			{
+				newTrack.reconstructions_.push_back(nextReconstruction);
+				newTrack.locations_.push_back(nextReconstruction->location3D_);
+				newTrack.cost_ += nextReconstruction->costReconstruction_;
+
+				// find rectangle on the first view
+				cv::Rect rectOnView;
+				if (NULL == nextReconstruction->detections_[0])
+				{
+					cv::Point2d imagePoint;
+					// bottom point
+					vecCamModels_[0].worldToImage(nextReconstruction->location3D_.x, 
+						                          nextReconstruction->location3D_.y, 
+												  nextReconstruction->location3D_.z, 
+												  imagePoint.x, imagePoint.y);
+					rectOnView.x = (int)imagePoint.x;
+					rectOnView.y = (int)imagePoint.y;
+
+					// head point
+					vecCamModels_[0].worldToImage(nextReconstruction->location3D_.x, 
+						                          nextReconstruction->location3D_.y, 
+												  DEFAULT_HEIGHT, 
+												  imagePoint.x, imagePoint.y);
+					rectOnView.height = (int)(imagePoint.y - (double)rectOnView.y + 1.0);
+					rectOnView.width = (int)(0.3 * (double)rectOnView.height);
+					rectOnView.x -= (int)(0.5 * (double)rectOnView.width);
+				}
+				else
+				{
+					rectOnView = nextReconstruction->detections_[0]->rect_;
+				}
+				vecQueueRectsOnTime_[nextReconstruction->frameIdx_].push_back(std::make_pair(newTrack.id_, rectOnView));
+				
+				// find next reconstruction				
+				bNextFound = false;
+				for (int linkIdx = 0; linkIdx < vecQueueLinkingEdges[nextReconstruction->id_].size(); linkIdx++)
+				{
+					CLinkage *curLink = &vecQueueLinkingEdges[nextReconstruction->id_][linkIdx];
+					if(0 == grbVarLinking[curLink->id_].get(GRB_DoubleAttr_Xn)) { continue; }
+					bNextFound = true;
+					nextReconstruction = vecStartingReconstructions[curLink->to_];
+				}
+				if (bNextFound)
+				{
+					printf("[WARNING] something is wrong in the track generations...\n");
+				}
+			}
+			while (0 != grbVarStarting[nextReconstruction->id_].get(GRB_DoubleAttr_Xn) && bNextFound);
+			newTrack.timeEnd_ = newTrack.reconstructions_.back()->frameIdx_;
+			newTrack.cost_ += newTrack.reconstructions_.back()->costExit_;
+
+			queueTracks_.push_back(newTrack);
+		}
+		
+		//---------------------------------------------------------
+		// WRAP-UP
+		//---------------------------------------------------------
+		if (NULL != addedConstr) { delete [] addedConstr; }		
+		for (int varIdx = 0; varIdx < grbVarReconstruction.size(); varIdx++) { model.remove(grbVarReconstruction[varIdx]); }
+		for (int varIdx = 0; varIdx < grbVarStarting.size(); varIdx++)       { model.remove(grbVarStarting[varIdx]); }
+		for (int varIdx = 0; varIdx < grbVarEnding.size(); varIdx++)         { model.remove(grbVarEnding[varIdx]); }
+		for (int varIdx = 0; varIdx < grbVarLinking.size(); varIdx++)        { model.remove(grbVarLinking[varIdx]); }
+		model.update();
+		model.reset();
+	}
+	catch (GRBException e)
+	{
+		std::cout << "[ERROR](Sovling) Error code = " << e.getErrorCode() << std::endl;
+		std::cout << e.getMessage() << std::endl;
+	} 
+	catch (...) 
+	{
+		std::cout << "[ERROR](Sovling) Exception during optimization" << std::endl;
+	}
 	return true;
 }
 
@@ -270,10 +677,12 @@ bool CHyperGraphTracker::LoadDetections(void)
 ************************************************************************/
 void CHyperGraphTracker::GenerateReconstructions(void)
 {
+	vecPtReconstructions_.clear();
 	vecvecPtReconstructions_.clear();
 	vecvecPtReconstructions_.resize(vecvecPtDetectionSets_.size());
 	for (int fIdx = 0; fIdx < vecvecPtDetectionSets_.size(); fIdx++)
 	{
+		printf("\rGenerate reconstructions at frame %04d/%04d ... ", fIdx+1, SET_.numFrames());
 		// generate combinations
 		DetectionSet nullSet(SET_.numCams(), NULL);		
 		std::deque<DetectionSet> detectionCombinations;
@@ -288,13 +697,15 @@ void CHyperGraphTracker::GenerateReconstructions(void)
 											  vecMatDistanceFromBoundary_, 
 											  P_FP, P_FN[SET_.GetScenarioNumber()], 
 											  SET_.GetParamHGT()->P_EN_TAU, SET_.GetParamHGT()->P_EX_TAU, 
-											  minDetectionHeight_);
+											  SET_.GetParamHGT()->DETECTION_MIN_HEIGHT);
 			if (!newReconstruction.bValid_) { continue; }
 			newReconstruction.id_ = numReconstructions_++;
 			listReconstructions_.push_back(newReconstruction);
+			vecPtReconstructions_.push_back(&listReconstructions_.back());
 			vecvecPtReconstructions_[fIdx].push_back(&listReconstructions_.back());
 		}
 	}
+	printf("done\n");
 }
 
 /************************************************************************

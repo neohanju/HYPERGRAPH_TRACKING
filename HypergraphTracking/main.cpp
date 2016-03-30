@@ -34,7 +34,8 @@ int main(int argc, char* argv[])
 	CHyperGraphTracker hgTracker;
 
 	hgTracker.Initialize(SET);
-	hgTracker.ConstructHyperGraph();
+	hgTracker.Run();
+	hgTracker.Visualization();
 
 	return 0;
 }

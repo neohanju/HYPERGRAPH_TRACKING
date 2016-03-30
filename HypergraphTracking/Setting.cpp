@@ -124,6 +124,14 @@ bool CSetting::LoadSetting(const char *strSettingPath)
 		{
 			paramHGT_.P_EX_TAU = std::stod(params[paramIdx].second);
 		}
+		else if (0 == params[paramIdx].first.compare("DETECTION_MIN_HEIGHT"))
+		{
+			paramHGT_.DETECTION_MIN_HEIGHT = std::stod(params[paramIdx].second);
+		}
+		else if (0 == params[paramIdx].first.compare("DISP_TRAJECTORY_LENGTH"))
+		{
+			dispTrajectoryLength_ = std::stoi(params[paramIdx].second);
+		}
 	}
 
 	if (0 == strDatasetBasePath.size() || 0 == numCams_)

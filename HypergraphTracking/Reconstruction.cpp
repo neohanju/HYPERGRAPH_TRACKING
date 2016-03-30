@@ -1,5 +1,6 @@
 #include "Reconstruction.h"
 #include "hjlib.h"
+#include <limits>
 
 inline double functionF(double d, double dmin, double dmax) { return 0.5 * hj::erfc(4.0 * (d - dmin) / (dmax - dmin) - 2.0); }
 
@@ -69,23 +70,29 @@ CReconstruction::CReconstruction(const DetectionSet &detections,
 
 	// get the numver of visible cameras
 	double detectionHalfWidth = 0.0;
-	cv::Point2d reprojectedPoint;
+	std::vector<cv::Point2d> pointOnImage(numCameras, cv::Point2d(0.0 ,0.0));
 	int numVisibleCameras = numDetections_;	
+	std::vector<bool> vecVisibility(numCameras, true);
 	for (int cIdx = 0; cIdx < numCameras; cIdx++)
 	{
-		if (NULL != detections_[cIdx]) { continue; }
-		vecCamModels[cIdx].worldToImage(location3D_.x, location3D_.y, 0.0, reprojectedPoint.x, reprojectedPoint.y);
+		if (NULL != detections_[cIdx])
+		{
+			pointOnImage[cIdx] = detections_[cIdx]->bottomCenter_;
+			continue;
+		}
+		vecCamModels[cIdx].worldToImage(location3D_.x, location3D_.y, 0.0, pointOnImage[cIdx].x, pointOnImage[cIdx].y);
 
 		// pad in for detection probability
 		cv::Point2d reprojectedTopPoint, pointDiff;
 		vecCamModels[cIdx].worldToImage(location3D_.x, location3D_.y, DEFAULT_HEIGHT, reprojectedTopPoint.x, reprojectedTopPoint.y);
-		pointDiff = reprojectedTopPoint - reprojectedPoint;
+		pointDiff = reprojectedTopPoint - pointOnImage[cIdx];
 		detectionHalfWidth = pointDiff.dot(pointDiff) / 6.0;
 
-		if (reprojectedPoint.x < detectionHalfWidth || reprojectedPoint.y < detectionHalfWidth
-			|| reprojectedPoint.x >= (double)vecCamModels[cIdx].width() - detectionHalfWidth
-			|| reprojectedPoint.y >= (double)vecCamModels[cIdx].height() - detectionHalfWidth)
+		if (pointOnImage[cIdx].x < detectionHalfWidth || pointOnImage[cIdx].y < detectionHalfWidth
+			|| pointOnImage[cIdx].x >= (double)vecCamModels[cIdx].width() - detectionHalfWidth
+			|| pointOnImage[cIdx].y >= (double)vecCamModels[cIdx].height() - detectionHalfWidth)
 		{			
+			vecVisibility[cIdx] = false;
 			continue;
 		}
 		numVisibleCameras++;
@@ -104,14 +111,13 @@ CReconstruction::CReconstruction(const DetectionSet &detections,
 
 	///////////////////////////////////////////////////////////
 	// ENTER and EXIT COST
-	///////////////////////////////////////////////////////////
-	cv::Point2d curPoint;
+	///////////////////////////////////////////////////////////	
 	double maxDistance = -100.0, curDistance = 0.0;
 	double maxDetectionHeight = 0.0;
 	for (int cIdx = 0; cIdx < numCameras; cIdx++)
 	{
-		if (NULL == detections_[cIdx]) { continue; }
-		curDistance = vecMatDistanceFromBoundary[cIdx].at<float>((int)curPoint.y, (int)curPoint.x);
+		if (!vecVisibility[cIdx]) { continue; }
+		curDistance = vecMatDistanceFromBoundary[cIdx].at<float>((int)pointOnImage[cIdx].y, (int)pointOnImage[cIdx].x);
 		if (maxDistance < curDistance) { maxDistance = curDistance; }
 		if (maxDetectionHeight < detections_[cIdx]->rect_.height) { maxDetectionHeight = detections_[cIdx]->rect_.height; }
 	}
@@ -146,11 +152,29 @@ double CReconstruction::GetTransitionCost(const CReconstruction &currR, const CR
 	double P_delta = std::pow(fnRatio, timeGap - 1);
 	double P_cond  = functionF((nextR.location3D_ - currR.location3D_).dot(nextR.location3D_ - currR.location3D_), 
 		                       0.0,
-							   V_MAX / FRAME_RATE * timeGap);
+							   V_MAX / FRAME_RATE * timeGap);	
+	if (std::numeric_limits<double>::epsilon() > P_cond) { return DBL_MAX; }
 	return -std::log(P_cond * P_delta);
+}
+
+bool CReconstruction::IsCompatible(const CReconstruction &recons1, const CReconstruction &recons2)
+{
+	DetectionSet::iterator findIter;
+	for (int d1Idx = 0; d1Idx < recons1.detections_.size(); d1Idx++)
+	{
+		for (int d2Idx = 0; d2Idx < recons2.detections_.size(); d2Idx++)
+		{
+			if (recons1.detections_[d1Idx] == recons2.detections_[d2Idx])
+			{
+				return false;
+			}
+		}
+	}
+	return true;
 }
 
 
 //()()
 //('')HAANJU.YOO
+
 

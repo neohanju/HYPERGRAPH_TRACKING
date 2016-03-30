@@ -19,6 +19,7 @@ public:
 	~CReconstruction(void);
 
 	static double GetTransitionCost(const CReconstruction &currR, const CReconstruction &nextR, const int deltaMax, const double fnRatio);
+	static bool IsCompatible(const CReconstruction &recons1, const CReconstruction &recons2);
 
 	//////////////////////////////////////////////////////////////////////////
 	// VARIABLES
@@ -34,6 +35,8 @@ public:
 	double costExit_;
 	double costReconstruction_;	
 };
+
+typedef std::vector<CReconstruction*> ReconstructionSet;
 
 //()()
 //('')HAANJU.YOO

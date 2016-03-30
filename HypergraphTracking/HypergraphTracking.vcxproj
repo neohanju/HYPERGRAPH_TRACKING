@@ -98,13 +98,13 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_300)\build\include;$(OPENCV_300)\build\include\opencv;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_300)\build\include;$(OPENCV_300)\build\include\opencv;$(GUROBI_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(OPENCV_300)\build\x64\vc11\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_ts300d.lib;opencv_world300d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPENCV_300)\build\x64\vc11\lib;$(GUROBI_HOME)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_ts300d.lib;opencv_world300d.lib;gurobi60.lib;gurobi_c++mdd2012.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <DelayLoadDLLs>
@@ -137,15 +137,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(OPENCV_300)\build\include;$(OPENCV_300)\build\include\opencv;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(OPENCV_300)\build\include;$(OPENCV_300)\build\include\opencv;$(GUROBI_HOME)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(OPENCV_300)\build\x64\vc11\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_ts300.lib;opencv_world300.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(OPENCV_300)\build\x64\vc11\lib;$(GUROBI_HOME)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opencv_ts300.lib;opencv_world300.lib;gurobi60.lib;gurobi_c++md2012.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <DelayLoadDLLs>
@@ -157,9 +157,11 @@
     <ClCompile Include="Detection.cpp" />
     <ClCompile Include="hjlib.cpp" />
     <ClCompile Include="HyperGraphTracker.cpp" />
+    <ClCompile Include="Linkage.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Reconstruction.cpp" />
     <ClCompile Include="Setting.cpp" />
+    <ClCompile Include="Track.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cameraModel.h" />
@@ -167,9 +169,11 @@
     <ClInclude Include="Detection.h" />
     <ClInclude Include="hjlib.h" />
     <ClInclude Include="HyperGraphTracker.h" />
+    <ClInclude Include="Linkage.h" />
     <ClInclude Include="Reconstruction.h" />
     <ClInclude Include="Setting.h" />
     <ClInclude Include="settings.txt" />
+    <ClInclude Include="Track.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

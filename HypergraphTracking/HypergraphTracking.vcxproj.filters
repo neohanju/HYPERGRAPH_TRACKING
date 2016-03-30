@@ -20,6 +20,12 @@
     <ClCompile Include="Setting.cpp">
       <Filter>Data</Filter>
     </ClCompile>
+    <ClCompile Include="Track.cpp">
+      <Filter>Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="Linkage.cpp">
+      <Filter>Elements</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="settings.txt">
@@ -43,6 +49,12 @@
     <ClInclude Include="defines.hpp" />
     <ClInclude Include="Setting.h">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Track.h">
+      <Filter>Elements</Filter>
+    </ClInclude>
+    <ClInclude Include="Linkage.h">
+      <Filter>Elements</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

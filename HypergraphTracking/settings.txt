@@ -7,7 +7,7 @@ CAMERA_INDICES=1,5,7
 
 % frame indices
 %START_FRAME_IDX=0
-END_FRAME_IDX=30
+END_FRAME_IDX=10
 
 % calibration path
 CALIBRATION_PATH=calibrationInfos
@@ -26,7 +26,12 @@ GROUND_TRUTH_PATH=groundTruth/cropped.txt
 %======================================
 P_EN_TAU=1000.0
 P_EX_TAU=1000.0
+DETECTION_MIN_HEIGHT=10
 
+%======================================
+% DISPLAY OPTION
+%======================================
+DISP_TRAJECTORY_LENGTH=10
 
 %()()
 %('')HAANJU.YOO

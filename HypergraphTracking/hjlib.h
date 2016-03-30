@@ -58,6 +58,10 @@ cv::Scalar hsv2bgr(double h, double s, double v);
 void alphaRectangle(cv::Mat &image, const cv::Rect rect, const cv::Scalar color, const double alpha = 0.2);
 cv::Mat MakeMatTile(std::vector<cv::Mat> *imageArray, unsigned int numRows, unsigned int numCols);
 
+// time related
+void printTime(double secs_);
+const std::string currentDateTime();
+
 }
 
 
