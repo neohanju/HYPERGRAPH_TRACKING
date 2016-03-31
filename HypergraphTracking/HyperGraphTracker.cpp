@@ -401,19 +401,18 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 			vecGRBContsNames.push_back(strName);
 			sprintf_s(strName, "fluxInitiation_%d", rIdx);
 			vecGRBContsNames.push_back(strName);
-			GRBLinExpr curFluxConsExpression = grbVarStarting[rIdx] - grbVarEnding[rIdx];
-			GRBLinExpr curFluxInitExpression = grbVarStarting[rIdx] - grbVarReconstruction[rIdx];
+			GRBLinExpr curIncomingFlux = -grbVarReconstruction[rIdx] + grbVarStarting[rIdx];
+			GRBLinExpr curOutgoingFlux = -grbVarReconstruction[rIdx] + grbVarReconstruction[rIdx];
 			for (int linkIdx = 0; linkIdx < vecQueueLinkFrom[rIdx].size(); linkIdx++)
 			{
-				curFluxConsExpression += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];
-				curFluxInitExpression += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];
+				curIncomingFlux += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];				
 			}
 			for (int linkIdx = 0; linkIdx < vecQueueLinkTo[rIdx].size(); linkIdx++)
 			{
-				curFluxConsExpression += -grbVarLinking[vecQueueLinkTo[rIdx][linkIdx]];
+				curOutgoingFlux += grbVarLinking[vecQueueLinkTo[rIdx][linkIdx]];
 			}			
-			vecGRBConstraints.push_back(curFluxConsExpression);
-			vecGRBConstraints.push_back(curFluxInitExpression);
+			vecGRBConstraints.push_back(curIncomingFlux);
+			vecGRBConstraints.push_back(curOutgoingFlux);
 		}	
 		printf("done\n");
 				
