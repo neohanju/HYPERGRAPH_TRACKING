@@ -7,8 +7,6 @@
 /////////////////////////////////////////////////////////////////////////
 
 
-
-
 /////////////////////////////////////////////////////////////////////////
 // INPUT RELATED
 /////////////////////////////////////////////////////////////////////////
@@ -37,14 +35,14 @@ const double DEFAULT_HEIGHT = 1700.0;
 
 // default setting written in the paper
 const double FRAME_RATE = 7.0; // video frame rate
-const double V_MAX    = 5000.0; // the maximal walking speed of a person (5 m/s)
-const double D_B_MAX  = 1000.0; // "close to the boundary" condition (1 m)
-const double ALPHA_H  = 2.0; // ratio of the boundary detection's height to the minimum detectable height of detections
-const double P_EN_MAX = 0.1; // entering probability
-const double P_EX_MAX = 0.1; // exiting probability
-const double EPS_DET  = 4.0; // expected detection error in the image coordinate
-const double EPS_CAL  = 500.0; // expected calibration error in the 3D space
-const double P_FP     = 0.05; // beta, false positive ratio
+const double V_MAX      = 5000.0; // the maximal walking speed of a person (5 m/s)
+const double D_B_MAX    = 1000.0; // "close to the boundary" condition (1 m)
+const double ALPHA_H    = 2.0; // ratio of the boundary detection's height to the minimum detectable height of detections
+const double P_EN_MAX   = 0.1; // entering probability
+const double P_EX_MAX   = 0.1; // exiting probability
+const double EPS_DET    = 4.0; // expected detection error in the image coordinate
+const double EPS_CAL    = 500.0; // expected calibration error in the 3D space
+const double P_FP       = 0.05; // beta, false positive ratio
 const double P_FN[NUM_PETS_SENARIO] = {0.1, 0.3, 0.4}; // gamma, false positive ratios
 const int    DELTA_T_MAX = 9; // the maximum frame gap
 

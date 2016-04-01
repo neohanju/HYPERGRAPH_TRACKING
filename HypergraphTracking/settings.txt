@@ -3,7 +3,7 @@ DATASET_BASE_PATH=D:/Workspace/Dataset/PETS2009
 DATASET_SCENARIO=L1
 
 % camera indices for experiments
-CAMERA_INDICES=1,5,7
+CAMERA_INDICES=1,5
 
 % frame indices
 %START_FRAME_IDX=0

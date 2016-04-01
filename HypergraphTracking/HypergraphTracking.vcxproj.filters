@@ -5,12 +5,6 @@
     <ClCompile Include="HyperGraphTracker.cpp">
       <Filter>HyperGraph</Filter>
     </ClCompile>
-    <ClCompile Include="Detection.cpp">
-      <Filter>Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="Reconstruction.cpp">
-      <Filter>Elements</Filter>
-    </ClCompile>
     <ClCompile Include="hjlib.cpp">
       <Filter>Helpers</Filter>
     </ClCompile>
@@ -20,11 +14,20 @@
     <ClCompile Include="Setting.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="Track.cpp">
-      <Filter>Elements</Filter>
+    <ClCompile Include="Detection.cpp">
+      <Filter>HyperGraph</Filter>
     </ClCompile>
     <ClCompile Include="Linkage.cpp">
-      <Filter>Elements</Filter>
+      <Filter>HyperGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Reconstruction.cpp">
+      <Filter>HyperGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Track.cpp">
+      <Filter>HyperGraph</Filter>
+    </ClCompile>
+    <ClCompile Include="Evaluator.cpp">
+      <Filter>Evaluation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -33,12 +36,6 @@
     </ClInclude>
     <ClInclude Include="HyperGraphTracker.h">
       <Filter>HyperGraph</Filter>
-    </ClInclude>
-    <ClInclude Include="Detection.h">
-      <Filter>Elements</Filter>
-    </ClInclude>
-    <ClInclude Include="Reconstruction.h">
-      <Filter>Elements</Filter>
     </ClInclude>
     <ClInclude Include="hjlib.h">
       <Filter>Helpers</Filter>
@@ -50,11 +47,20 @@
     <ClInclude Include="Setting.h">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="Track.h">
-      <Filter>Elements</Filter>
+    <ClInclude Include="Detection.h">
+      <Filter>HyperGraph</Filter>
     </ClInclude>
     <ClInclude Include="Linkage.h">
-      <Filter>Elements</Filter>
+      <Filter>HyperGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Reconstruction.h">
+      <Filter>HyperGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Track.h">
+      <Filter>HyperGraph</Filter>
+    </ClInclude>
+    <ClInclude Include="Evaluator.h">
+      <Filter>Evaluation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -64,11 +70,11 @@
     <Filter Include="HyperGraph">
       <UniqueIdentifier>{8244e288-0ed1-4304-aa1d-4eac617e9e56}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Elements">
-      <UniqueIdentifier>{e64efc53-f0b4-436f-aed2-5d8c20a1de7c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Helpers">
       <UniqueIdentifier>{23916558-445f-4d5e-aa60-4d5c082e4ec5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Evaluation">
+      <UniqueIdentifier>{e64efc53-f0b4-436f-aed2-5d8c20a1de7c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
