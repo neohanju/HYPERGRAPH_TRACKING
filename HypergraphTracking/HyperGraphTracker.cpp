@@ -217,6 +217,20 @@ bool CHyperGraphTracker::Run(void)
  Return Values:
 	- 
 ************************************************************************/
+bool CHyperGraphTracker::SaveTrackingResult(const std::string strFilePath)
+{
+	return true;
+}
+
+/************************************************************************
+ Method Name: Run
+ Description: 
+	- 
+ Input Arguments:
+	- none
+ Return Values:
+	- 
+************************************************************************/
 void CHyperGraphTracker::Visualization(void)
 {
 	int imageFrameIdx = SET_.startFrameIdx();
@@ -276,7 +290,7 @@ void CHyperGraphTracker::Visualization(void)
 ************************************************************************/
 bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 {
-	printf("Constructing graph...\n");
+	printf("Constructing graph ("); std::cout << hj::currentDateTime() << ") ..."<< std::endl;
 	time_t timeStart = time(0);
 
 	///////////////////////////////////////////////////////////
@@ -326,7 +340,7 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 				double costExit = vecvecPtReconstructions_[fIdx].size() - 1 == fIdx? -std::log(P_EX_MAX) : curReconstruction->costExit_;
 
 				// objective
-				linExprObjective += curReconstruction->costReconstruction_ * grbVarStarting.back()
+				linExprObjective += curReconstruction->costReconstruction_ * grbVarReconstruction.back()
 					              + costEnter * grbVarStarting.back()
 					              + costExit * grbVarEnding.back();
 
@@ -351,8 +365,8 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 		// LINKING EDGES
 		//---------------------------------------------------------		
 		std::vector<std::deque<CLinkage>> vecQueueLinkingEdges(vecPtReconstructions_.size());
-		std::vector<std::deque<int>> vecQueueLinkTo(vecPtReconstructions_.size());
-		std::vector<std::deque<int>> vecQueueLinkFrom(vecPtReconstructions_.size());
+		std::vector<std::deque<int>> vecQueueFluxOut(vecPtReconstructions_.size());
+		std::vector<std::deque<int>> vecQueueFluxIn(vecPtReconstructions_.size());
 		int linkId = 0;
 		for (int fIdx = 0; fIdx < vecvecPtReconstructions_.size()-1; fIdx++)
 		{
@@ -375,15 +389,15 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 						newLink.to_   = vecvecPtReconstructions_[jumpFIdx][nextRIdx]->id_;
 
 						// add variable
-						sprintf_s(strName, "linking_%d", linkId);
+						sprintf_s(strName, "linking_%d", newLink.id_);
 						grbVarLinking.push_back(model.addVar(0.0, 1.0, 0.0, GRB_BINARY, strName));
 
 						// objective
 						linExprObjective += newLink.cost_ * grbVarLinking.back();						
 
 						// for constraints
-						vecQueueLinkTo[newLink.from_].push_back(newLink.id_);
-						vecQueueLinkFrom[newLink.to_].push_back(newLink.id_);
+						vecQueueFluxOut[newLink.from_].push_back(newLink.id_);
+						vecQueueFluxIn[newLink.to_].push_back(newLink.id_);
 
 						// for track construction
 						vecQueueLinkingEdges[newLink.from_].push_back(newLink);
@@ -402,20 +416,19 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 			sprintf_s(strName, "fluxInitiation_%d", rIdx);
 			vecGRBContsNames.push_back(strName);
 			GRBLinExpr curIncomingFlux = -grbVarReconstruction[rIdx] + grbVarStarting[rIdx];
-			GRBLinExpr curOutgoingFlux = -grbVarReconstruction[rIdx] + grbVarReconstruction[rIdx];
-			for (int linkIdx = 0; linkIdx < vecQueueLinkFrom[rIdx].size(); linkIdx++)
+			GRBLinExpr curOutgoingFlux = -grbVarReconstruction[rIdx] + grbVarEnding[rIdx];
+			for (int linkIdx = 0; linkIdx < vecQueueFluxIn[rIdx].size(); linkIdx++)
 			{
-				curIncomingFlux += grbVarLinking[vecQueueLinkFrom[rIdx][linkIdx]];				
+				curIncomingFlux += grbVarLinking[vecQueueFluxIn[rIdx][linkIdx]];				
 			}
-			for (int linkIdx = 0; linkIdx < vecQueueLinkTo[rIdx].size(); linkIdx++)
+			for (int linkIdx = 0; linkIdx < vecQueueFluxOut[rIdx].size(); linkIdx++)
 			{
-				curOutgoingFlux += grbVarLinking[vecQueueLinkTo[rIdx][linkIdx]];
+				curOutgoingFlux += grbVarLinking[vecQueueFluxOut[rIdx][linkIdx]];
 			}			
 			vecGRBConstraints.push_back(curIncomingFlux);
 			vecGRBConstraints.push_back(curOutgoingFlux);
 		}	
-		printf("done\n");
-				
+		printf("done\n");		
 
 		// set variables and objective (lazy update)
 		model.update();
@@ -446,6 +459,7 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 
 		// elapsed time
 		timeProblemConstruction_ = difftime(time(0), timeStart);
+		printf(" construction time: "); hj::printTime(timeProblemConstruction_); printf("\n");
 		
 		///////////////////////////////////////////////////////////
 		// SOLVING
@@ -455,8 +469,8 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 
 		//---------------------------------------------------------
 		// OPTIMIZATION
-		//-----------------------------------------------------------
-		printf("Solving graph...");
+		//---------------------------------------------------------
+		printf("Solving graph ("); std::cout << hj::currentDateTime() << ") ... ";		
 		timeStart = time(0);
 		model.optimize();
 		optimStatus = model.get(GRB_IntAttr_Status);
@@ -469,10 +483,11 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 		}
 		timeProblemSolving_ = difftime(time(0), timeStart);
 		printf("done\n");
+		printf(" solving time: "); hj::printTime(timeProblemSolving_); printf("\n");
 		
 		//---------------------------------------------------------
 		// SOLUTION PARSING AND TRACK GENERATION
-		//-----------------------------------------------------------
+		//---------------------------------------------------------
 		// generate new (sub) global hypothesis
 		std::vector<ReconstructionSet> vecSelectedReconstructions(vecvecPtReconstructions_.size());
 
@@ -525,6 +540,9 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 				}
 				vecQueueRectsOnTime_[nextReconstruction->frameIdx_].push_back(std::make_pair(newTrack.id_, rectOnView));
 				
+				// check termination
+				if (0 != grbVarEnding[nextReconstruction->id_].get(GRB_DoubleAttr_Xn)) { break; }
+
 				// find next reconstruction				
 				bNextFound = false;
 				for (int linkIdx = 0; linkIdx < vecQueueLinkingEdges[nextReconstruction->id_].size(); linkIdx++)
@@ -532,14 +550,11 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 					CLinkage *curLink = &vecQueueLinkingEdges[nextReconstruction->id_][linkIdx];
 					if(0 == grbVarLinking[curLink->id_].get(GRB_DoubleAttr_Xn)) { continue; }
 					bNextFound = true;
-					nextReconstruction = vecStartingReconstructions[curLink->to_];
-				}
-				if (bNextFound)
-				{
-					printf("[WARNING] something is wrong in the track generations...\n");
+					nextReconstruction = vecPtReconstructions_[curLink->to_];
+					break;
 				}
 			}
-			while (0 != grbVarStarting[nextReconstruction->id_].get(GRB_DoubleAttr_Xn) && bNextFound);
+			while (bNextFound);
 			newTrack.timeEnd_ = newTrack.reconstructions_.back()->frameIdx_;
 			newTrack.cost_ += newTrack.reconstructions_.back()->costExit_;
 

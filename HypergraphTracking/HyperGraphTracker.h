@@ -19,6 +19,7 @@ public:
 	bool Initialize(const CSetting &SET);
 	bool Finalize(void);
 	bool Run(void);
+	bool SaveTrackingResult(const std::string strFilePath);
 	void Visualization(void);
 
 private:

@@ -36,7 +36,7 @@ const std::string SCENARIO_PATH[NUM_PETS_SENARIO] = {"S2/L1/Time_12-34", "S2/L2/
 const double DEFAULT_HEIGHT = 1700.0;
 
 // default setting written in the paper
-const double FRAME_RATE = 7.5; // video frame rate
+const double FRAME_RATE = 7.0; // video frame rate
 const double V_MAX    = 5000.0; // the maximal walking speed of a person (5 m/s)
 const double D_B_MAX  = 1000.0; // "close to the boundary" condition (1 m)
 const double ALPHA_H  = 2.0; // ratio of the boundary detection's height to the minimum detectable height of detections

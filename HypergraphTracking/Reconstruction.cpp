@@ -150,9 +150,9 @@ double CReconstruction::GetTransitionCost(const CReconstruction &currR, const CR
 	int timeGap = nextR.frameIdx_ - currR.frameIdx_;
 	if (timeGap > DELTA_T_MAX) { return DBL_MAX; }
 	double P_delta = std::pow(fnRatio, timeGap - 1);
-	double P_cond  = functionF((nextR.location3D_ - currR.location3D_).dot(nextR.location3D_ - currR.location3D_), 
+	double P_cond  = functionF(std::sqrt((nextR.location3D_ - currR.location3D_).dot(nextR.location3D_ - currR.location3D_)), 
 		                       0.0,
-							   V_MAX / FRAME_RATE * timeGap);	
+							   V_MAX / FRAME_RATE * (double)timeGap);	
 	if (std::numeric_limits<double>::epsilon() > P_cond) { return DBL_MAX; }
 	return -std::log(P_cond * P_delta);
 }
