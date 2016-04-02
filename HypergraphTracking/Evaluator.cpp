@@ -1,5 +1,6 @@
 #include "Evaluator.h"
 #include "defines.hpp"
+#include "opencv2\core\core.hpp"
 #include <numeric>
 
 #define MAXIMUM_POINT_ERROR (CROP_ZONE_MARGIN)
@@ -38,12 +39,10 @@ void CEvaluator::Initialize(std::string strFilepath)
 	this->m_stResult.nFragments = 0;
 
 	// read ground truth
-	FILE *fp;	
-	char strPath[128];
-	sprintf_s(strPath, "%s/groundTruth/cropped.txt", strFilepath.c_str());
+	FILE *fp;		
 	try
 	{
-		fopen_s(&fp, strPath, "r");
+		fopen_s(&fp, strFilepath.c_str(), "r");
 		float tempFloat;
 
 		fscanf_s(fp, "numObj=%d,numTime=%d\n", &this->m_nNumObj, &this->m_nNumTime);
@@ -143,11 +142,9 @@ void CEvaluator::SetResult(std::vector<pointInfo> &points, int timeIdx)
 void CEvaluator::LoadTrackingResultFromText(std::string strFilepath)
 {
 	FILE *fp;	
-	char strPath[128];
-	sprintf_s(strPath, "%s", strFilepath.c_str());
 	try
 	{
-		fopen_s(&fp, strPath, "r");
+		fopen_s(&fp, strFilepath.c_str(), "r");
 
 		float readingFloat;
 		int numObject = 0;
@@ -707,12 +704,12 @@ void CEvaluator::PrintResultToConsole()
 		this->m_stResult.fMOTAL * 100);
 }
 
-void CEvaluator::PrintResultToFile(const char *strFilepathAndName)
+void CEvaluator::PrintResultToFile(const std::string strFilepathAndName)
 {
 	FILE *fp;
 	try
 	{
-		fopen_s(&fp, strFilepathAndName, "w");
+		fopen_s(&fp, strFilepathAndName.c_str();, "w");
 		fprintf_s(fp, "Evaluating PETS on ground plane...\n");
 		fprintf_s(fp, "| Recl Prcn  FAR| MT PT ML|  FPR  FNR  FP  FN  ID  FM  err| MOTA MOTP MOTL\n");
 		fprintf_s(fp, "|%5.1f%5.1f%5.2f|%3i%3i%3i|%5.1f%5.1f%4i%4i%4i%4i%5i|%5.1f %4.1f %4.1f\n", 
@@ -741,12 +738,12 @@ void CEvaluator::PrintResultToFile(const char *strFilepathAndName)
 	}
 }
 
-void CEvaluator::PrintResultMatrix(const char *strFilepathAndName)
+void CEvaluator::PrintResultMatrix(const std::string strFilepathAndName)
 {
 	FILE *fp;
 	try
 	{
-		fopen_s(&fp, strFilepathAndName, "w");		
+		fopen_s(&fp, strFilepathAndName.c_str(), "w");		
 		
 		// matX
 		fprintf_s(fp, "MatX:(%d,%d)\n", this->matX.rows, this->matX.cols);

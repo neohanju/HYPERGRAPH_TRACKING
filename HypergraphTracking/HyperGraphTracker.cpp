@@ -188,6 +188,16 @@ bool CHyperGraphTracker::Finalize(void)
 		return false;
 	}
 
+	///////////////////////////////////////////////////////////
+	// TRACKING RESULT
+	///////////////////////////////////////////////////////////	
+	queueTracks_.clear();	
+
+	///////////////////////////////////////////////////////////
+	// VISUALIZATION
+	///////////////////////////////////////////////////////////	
+	vecQueueRectsOnTime_.clear();
+
 	return true;
 }
 
@@ -217,8 +227,71 @@ bool CHyperGraphTracker::Run(void)
  Return Values:
 	- 
 ************************************************************************/
-bool CHyperGraphTracker::SaveTrackingResult(const std::string strFilePath)
+bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 {
+	if (0 == queueTracks_.size())
+	{
+		printf("[ERROR] there is no tracking result to save\n");
+		return false;
+	}
+
+	// make X and Y mats
+	int numObjects = queueTracks_.size();
+	std::vector<std::deque<std::pair<int, cv::Point3d>>> vecQueueLocationsOnTime(SET_.numFrames());
+	for (int tIdx = 0; tIdx < queueTracks_.size(); tIdx++)
+	{
+		for (int rIdx = 0; rIdx < queueTracks_[tIdx].reconstructions_.size(); rIdx++)
+		{
+			vecQueueLocationsOnTime[queueTracks_[tIdx].reconstructions_[rIdx]->frameIdx_].push_back(
+				std::make_pair(queueTracks_[tIdx].id_, queueTracks_[tIdx].reconstructions_[rIdx]->location3D_));
+		}
+	}
+
+	// read ground truth
+	FILE *fp;		
+	try
+	{
+		fopen_s(&fp, strFilePath.c_str(), "r");		
+		fprintf_s(fp, "numObj=%d,numTime=%d\n", queueTracks_.size(), SET_.numFrames());
+
+		// write X
+		fprintf_s(fp, "X={\n");
+		for (int fIdx = 0; fIdx < SET_.numFrames(); fIdx++)
+		{
+			std::vector<float> curRow(numObjects, 0.0);
+			for (int pIdx = 0; pIdx < vecQueueLocationsOnTime[fIdx].size(); pIdx++)
+			{
+				curRow[vecQueueLocationsOnTime[fIdx][pIdx].first] = (float)vecQueueLocationsOnTime[fIdx][pIdx].second.x;
+			}
+			for (int colIdx = 0; colIdx < numObjects; colIdx++)
+			{
+				fprintf_s(fp, "%f,", curRow[colIdx]);				
+			}
+			fscanf_s(fp, "\n");
+		}
+
+		// write Y
+		fprintf_s(fp, "X={\n");
+		for (int fIdx = 0; fIdx < SET_.numFrames(); fIdx++)
+		{
+			std::vector<float> curRow(numObjects, 0.0);
+			for (int pIdx = 0; pIdx < vecQueueLocationsOnTime[fIdx].size(); pIdx++)
+			{
+				curRow[vecQueueLocationsOnTime[fIdx][pIdx].first] = (float)vecQueueLocationsOnTime[fIdx][pIdx].second.y;
+			}
+			for (int colIdx = 0; colIdx < numObjects; colIdx++)
+			{
+				fprintf_s(fp, "%f,", curRow[colIdx]);				
+			}
+			fscanf_s(fp, "\n");
+		}
+		fclose(fp);
+	}
+	catch (int dwError)
+	{
+		printf("[ERROR] cannot open data. error code %d\n", dwError);
+		return false;
+	}
 	return true;
 }
 
@@ -487,8 +560,7 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 		
 		//---------------------------------------------------------
 		// SOLUTION PARSING AND TRACK GENERATION
-		//---------------------------------------------------------
-		// generate new (sub) global hypothesis
+		//---------------------------------------------------------		
 		std::vector<ReconstructionSet> vecSelectedReconstructions(vecvecPtReconstructions_.size());
 
 		// find starting reconstructions		
@@ -511,8 +583,8 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 				newTrack.reconstructions_.push_back(nextReconstruction);
 				newTrack.locations_.push_back(nextReconstruction->location3D_);
 				newTrack.cost_ += nextReconstruction->costReconstruction_;
-
-				// find rectangle on the first view
+				
+				// for visualization, find rectangle on the first view
 				cv::Rect rectOnView;
 				if (NULL == nextReconstruction->detections_[0])
 				{

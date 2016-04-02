@@ -22,6 +22,7 @@ public:
 	std::string GetResultPath(void)          { return strResultPath_; }
 	std::string GetViewPath(int camIdx)      { return vecStrViewPaths_[camIdx]; }
 	std::string GetDetectionPath(int camIdx) { return vecStrDetectionPaths_[camIdx]; }
+	std::string GetGTPath(void)              { return strGroundTruthPath_; }
 	PETS_SCENARIO GetScenarioNumber(void)    { return scenarioNumber_; }
 	stHypergraphTrackingParams* GetParamHGT(void) { return &paramHGT_; }
 

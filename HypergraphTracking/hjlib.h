@@ -60,7 +60,7 @@ cv::Mat MakeMatTile(std::vector<cv::Mat> *imageArray, unsigned int numRows, unsi
 
 // time related
 void printTime(double secs_);
-const std::string currentDateTime();
+const std::string currentDateTime(int form = 0);
 
 }
 

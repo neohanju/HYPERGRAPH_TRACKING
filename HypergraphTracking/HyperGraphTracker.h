@@ -19,7 +19,7 @@ public:
 	bool Initialize(const CSetting &SET);
 	bool Finalize(void);
 	bool Run(void);
-	bool SaveTrackingResult(const std::string strFilePath);
+	bool SaveTrackingResultToFile(const std::string strFilePath);
 	void Visualization(void);
 
 private:
@@ -46,7 +46,7 @@ private:
 	std::vector<std::vector<DetectionSet>> vecvecPtDetectionSets_;      // frame / cam / detection
 	std::vector<ReconstructionSet> vecvecPtReconstructions_; // frame / reconstruction	
 	ReconstructionSet vecPtReconstructions_; // for fast access at the end of graph solving
-	std::deque<CTrack> queueTracks_;
+	std::deque<CTrack> queueTracks_;	
 	std::vector<std::deque<std::pair<int, cv::Rect>>> vecQueueRectsOnTime_;
 
 	int numDetections_;

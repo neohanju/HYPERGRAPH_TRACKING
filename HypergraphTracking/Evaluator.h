@@ -40,8 +40,8 @@ public:
 	//stEvaluationResult EvaluateWithCrop(double cropMargin);
 
 	void PrintResultToConsole();
-	void PrintResultToFile(const char *strFilepathAndName);
-	void PrintResultMatrix(const char *strFilepathAndName);
+	void PrintResultToFile(const std::string strFilepathAndName);
+	void PrintResultMatrix(const std::string strFilepathAndName);
 
 private:
 	bool bInit;

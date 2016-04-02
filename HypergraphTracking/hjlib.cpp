@@ -755,7 +755,7 @@ void printTime(double secs_)
 	printf("%d days %02d:%02d:%05.2f", days, hours, mins, fmod(secs_, 60.0));
 }
 
-const std::string currentDateTime()
+const std::string currentDateTime(int form)
 {
     time_t     now = time(0);
     struct tm  tstruct;
@@ -763,7 +763,15 @@ const std::string currentDateTime()
 	localtime_s(&tstruct, &now);
     // Visit http://en.cppreference.com/w/cpp/chrono/c/strftime
     // for more information about date/time format
-    strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+	switch (form)
+	{
+	case 1:
+		strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
+		break;
+	default:
+		strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);
+		break;
+	}    
 
     return buf;
 }
