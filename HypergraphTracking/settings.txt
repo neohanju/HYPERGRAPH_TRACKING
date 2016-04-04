@@ -3,11 +3,12 @@ DATASET_BASE_PATH=D:/Workspace/Dataset/PETS2009
 DATASET_SCENARIO=L1
 
 % camera indices for experiments
-CAMERA_INDICES=1,5
+CAMERA_INDICES=1,5,7
 
 % frame indices
 START_FRAME_IDX=0
-END_FRAME_IDX=794
+END_FRAME_IDX=30
+%END_FRAME_IDX=794
 
 % calibration path
 CALIBRATION_PATH=calibrationInfos
@@ -16,7 +17,7 @@ CALIBRATION_PATH=calibrationInfos
 DETECTION_PATH=detectionResult
 
 % result saving path
-RESULT_SAVE_PATH=D:/Workspace/ExperimentalResult
+RESULT_SAVE_PATH=D:/Workspace/ExperimentalResult/PETS2009/Hofmann
 
 % ground truth
 GROUND_TRUTH_PATH=groundTruth/cropped.txt

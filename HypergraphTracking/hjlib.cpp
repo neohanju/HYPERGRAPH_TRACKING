@@ -766,7 +766,13 @@ const std::string currentDateTime(int form)
 	switch (form)
 	{
 	case 1:
-		strftime(buf, sizeof(buf), "%Y_%m_%d_%X", &tstruct);
+		sprintf_s(buf, "%04d%02d%02d_%02d%02d%02d", 
+			tstruct.tm_year+1990,
+			tstruct.tm_mon+1,
+			tstruct.tm_mday,
+			tstruct.tm_hour,
+			tstruct.tm_min,
+			tstruct.tm_sec);
 		break;
 	default:
 		strftime(buf, sizeof(buf), "%Y-%m-%d.%X", &tstruct);

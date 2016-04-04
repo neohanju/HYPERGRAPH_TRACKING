@@ -251,7 +251,7 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 	FILE *fp;		
 	try
 	{
-		fopen_s(&fp, strFilePath.c_str(), "r");		
+		fopen_s(&fp, strFilePath.c_str(), "w");		
 		fprintf_s(fp, "numObj=%d,numTime=%d\n", queueTracks_.size(), SET_.numFrames());
 
 		// write X

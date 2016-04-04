@@ -119,7 +119,10 @@ CReconstruction::CReconstruction(const DetectionSet &detections,
 		if (!vecVisibility[cIdx]) { continue; }
 		curDistance = vecMatDistanceFromBoundary[cIdx].at<float>((int)pointOnImage[cIdx].y, (int)pointOnImage[cIdx].x);
 		if (maxDistance < curDistance) { maxDistance = curDistance; }
-		if (maxDetectionHeight < detections_[cIdx]->rect_.height) { maxDetectionHeight = detections_[cIdx]->rect_.height; }
+		if (NULL != detections_[cIdx] && maxDetectionHeight < detections_[cIdx]->rect_.height)
+		{
+			maxDetectionHeight = detections_[cIdx]->rect_.height;
+		}
 	}
 
 	double P_enter = P_EN_MAX;
