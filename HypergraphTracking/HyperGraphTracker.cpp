@@ -1,6 +1,7 @@
 #include "HyperGraphTracker.h"
 #include "Linkage.h"
 #include "hjlib.h"
+#include "SGSmooth.h"
 #include "gurobi_c++.h"
 #include "opencv2\highgui\highgui.hpp"
 #include <time.h>
@@ -123,11 +124,6 @@ bool CHyperGraphTracker::Initialize(const CSetting &SET)
 		return false;
 	}
 
-	///////////////////////////////////////////////////////////
-	// VISUALIZATION
-	///////////////////////////////////////////////////////////	
-	vecQueueRectsOnTime_.resize(SET_.numFrames());
-
 	return true;
 }
 
@@ -193,11 +189,6 @@ bool CHyperGraphTracker::Finalize(void)
 	///////////////////////////////////////////////////////////	
 	queueTracks_.clear();	
 
-	///////////////////////////////////////////////////////////
-	// VISUALIZATION
-	///////////////////////////////////////////////////////////	
-	vecQueueRectsOnTime_.clear();
-
 	return true;
 }
 
@@ -240,10 +231,10 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 	std::vector<std::deque<std::pair<int, cv::Point3d>>> vecQueueLocationsOnTime(SET_.numFrames());
 	for (int tIdx = 0; tIdx < queueTracks_.size(); tIdx++)
 	{
-		for (int rIdx = 0; rIdx < queueTracks_[tIdx].reconstructions_.size(); rIdx++)
+		int fIdx = queueTracks_[tIdx].timeStart_;
+		for (int pIdx = 0; pIdx < queueTracks_[tIdx].locations_.size(); pIdx++, fIdx++)
 		{
-			vecQueueLocationsOnTime[queueTracks_[tIdx].reconstructions_[rIdx]->frameIdx_].push_back(
-				std::make_pair(queueTracks_[tIdx].id_, queueTracks_[tIdx].reconstructions_[rIdx]->location3D_));
+			vecQueueLocationsOnTime[fIdx].push_back(std::make_pair(queueTracks_[tIdx].id_, queueTracks_[tIdx].locations_[pIdx]));
 		}
 	}
 
@@ -305,14 +296,58 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
  Return Values:
 	- 
 ************************************************************************/
-void CHyperGraphTracker::Visualization(void)
+void CHyperGraphTracker::Visualization(int viewIdx)
 {
+	// for visualization, find rectangle on the target view
+	std::vector<std::deque<std::pair<int, cv::Rect>>> vecQueueRectsOnTime(SET_.numFrames());	
+	for (int tIdx = 0; tIdx < queueTracks_.size(); tIdx++)
+	{
+		int fIdx = queueTracks_[tIdx].timeStart_;
+		for (int pIdx = 0; pIdx < queueTracks_[tIdx].locations_.size(); pIdx++, fIdx++)
+		{
+			cv::Rect rectOnView;
+			cv::Point2d imagePoint;
+
+			// bottom point
+			vecCamModels_[viewIdx].worldToImage(queueTracks_[tIdx].locations_[pIdx].x, 
+						                        queueTracks_[tIdx].locations_[pIdx].y, 
+											    queueTracks_[tIdx].locations_[pIdx].z, 
+											    imagePoint.x, imagePoint.y);
+			rectOnView.x = (int)imagePoint.x;
+			rectOnView.y = (int)imagePoint.y;
+			if (NULL == queueTracks_[tIdx].reconstructions_[pIdx]
+			|| NULL == queueTracks_[tIdx].reconstructions_[pIdx]->detections_[viewIdx])
+			{
+				rectOnView.x = (int)imagePoint.x;
+				rectOnView.y = (int)imagePoint.y;
+
+				// head point
+				vecCamModels_[viewIdx].worldToImage(queueTracks_[tIdx].locations_[pIdx].x, 
+						                            queueTracks_[tIdx].locations_[pIdx].y, 
+												    DEFAULT_HEIGHT, 
+												    imagePoint.x, imagePoint.y);
+				rectOnView.height = (int)((double)rectOnView.y - imagePoint.y + 1.0);
+				rectOnView.width = (int)(0.3 * (double)rectOnView.height);
+				rectOnView.x -= (int)(0.5 * (double)rectOnView.width);
+				rectOnView.y = (int)imagePoint.y;
+			}
+			else
+			{
+				rectOnView.width = (int)queueTracks_[tIdx].reconstructions_[pIdx]->detections_[viewIdx]->rect_.width;
+				rectOnView.height = (int)queueTracks_[tIdx].reconstructions_[pIdx]->detections_[viewIdx]->rect_.height;
+				rectOnView.x -= (int)(0.5 * (double)rectOnView.width);
+				rectOnView.y -= rectOnView.height;
+			}
+			vecQueueRectsOnTime[fIdx].push_back(std::make_pair(queueTracks_[tIdx].id_, rectOnView));
+		}
+	}
+
 	int imageFrameIdx = SET_.startFrameIdx();
 	std::vector<cv::Scalar> COLORS = hj::GenerateColors((int)queueTracks_.size());
 	cv::Mat inputFrame;
 	for (int fIdx = 0; fIdx < SET_.numFrames(); fIdx++, imageFrameIdx++)
 	{
-		inputFrame = cv::imread(hj::fullfile(SET_.GetViewPath(0), hj::sprintf("frame_%04d.jpg", imageFrameIdx)));
+		inputFrame = cv::imread(hj::fullfile(SET_.GetViewPath(viewIdx), hj::sprintf("frame_%04d.jpg", imageFrameIdx)));
 		
 		// writing frame info
 		char strFrameInfo[100];
@@ -321,11 +356,11 @@ void CHyperGraphTracker::Visualization(void)
 		cv::putText(inputFrame, strFrameInfo, cv::Point(6, 20), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(255, 255, 255));
 		
 		// draw rectangles
-		for (int rectIdx = 0; rectIdx < vecQueueRectsOnTime_[fIdx].size(); rectIdx++)
+		for (int rectIdx = 0; rectIdx < vecQueueRectsOnTime[fIdx].size(); rectIdx++)
 		{
-			int trackId = vecQueueRectsOnTime_[fIdx][rectIdx].first;
-			cv::Rect *curRect = &vecQueueRectsOnTime_[fIdx][rectIdx].second;
-			cv::rectangle(inputFrame, vecQueueRectsOnTime_[fIdx][rectIdx].second, COLORS[trackId], 2);
+			int trackId = vecQueueRectsOnTime[fIdx][rectIdx].first;
+			cv::Rect *curRect = &vecQueueRectsOnTime[fIdx][rectIdx].second;
+			cv::rectangle(inputFrame, *curRect, COLORS[trackId], 2);
 			cv::putText(inputFrame, std::to_string(trackId), cv::Point(curRect->x, curRect->y+40), cv::FONT_HERSHEY_SIMPLEX, 1.0, COLORS[trackId]);
 
 			// draw trajectory
@@ -572,46 +607,31 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 			vecStartingReconstructions.push_back(vecPtReconstructions_[varIdx]);
 		}
 
-		// construction track		
+				// construction track		
 		for (int trackIdx = 0; trackIdx < vecStartingReconstructions.size(); trackIdx++)
 		{
-			CTrack newTrack(trackIdx, vecStartingReconstructions[trackIdx]->frameIdx_);	
+			int prevFrameIdx = vecStartingReconstructions[trackIdx]->frameIdx_;
+			cv::Point3d prevPoint(0.0, 0.0, 0.0);
+			CTrack newTrack(trackIdx, prevFrameIdx);	
 			CReconstruction* nextReconstruction = vecStartingReconstructions[trackIdx];
 			newTrack.cost_ = nextReconstruction->costEnter_;
 			bool bNextFound = false;
 			do
 			{
+				// fill the gap with interpolation
+				int timeGap = nextReconstruction->frameIdx_ - prevFrameIdx;
+				for (int interpolationIdx = 1; interpolationIdx < timeGap; interpolationIdx++)
+				{
+					cv::Point3d curLocation = prevPoint + (nextReconstruction->location3D_ - prevPoint) / timeGap * interpolationIdx;
+					newTrack.reconstructions_.push_back(NULL);
+					newTrack.locations_.push_back(curLocation);
+				}
+				prevPoint = nextReconstruction->location3D_;
+				prevFrameIdx = nextReconstruction->frameIdx_;
+
 				newTrack.reconstructions_.push_back(nextReconstruction);
 				newTrack.locations_.push_back(nextReconstruction->location3D_);
-				newTrack.cost_ += nextReconstruction->costReconstruction_;
-				
-				// for visualization, find rectangle on the first view
-				cv::Rect rectOnView;
-				if (NULL == nextReconstruction->detections_[0])
-				{
-					cv::Point2d imagePoint;
-					// bottom point
-					vecCamModels_[0].worldToImage(nextReconstruction->location3D_.x, 
-						                          nextReconstruction->location3D_.y, 
-												  nextReconstruction->location3D_.z, 
-												  imagePoint.x, imagePoint.y);
-					rectOnView.x = (int)imagePoint.x;
-					rectOnView.y = (int)imagePoint.y;
-
-					// head point
-					vecCamModels_[0].worldToImage(nextReconstruction->location3D_.x, 
-						                          nextReconstruction->location3D_.y, 
-												  DEFAULT_HEIGHT, 
-												  imagePoint.x, imagePoint.y);
-					rectOnView.height = (int)(imagePoint.y - (double)rectOnView.y + 1.0);
-					rectOnView.width = (int)(0.3 * (double)rectOnView.height);
-					rectOnView.x -= (int)(0.5 * (double)rectOnView.width);
-				}
-				else
-				{
-					rectOnView = nextReconstruction->detections_[0]->rect_;
-				}
-				vecQueueRectsOnTime_[nextReconstruction->frameIdx_].push_back(std::make_pair(newTrack.id_, rectOnView));
+				newTrack.cost_ += nextReconstruction->costReconstruction_;		
 				
 				// check termination
 				if (0 != grbVarEnding[nextReconstruction->id_].get(GRB_DoubleAttr_Xn)) { break; }
@@ -654,21 +674,48 @@ bool CHyperGraphTracker::ConstructGraphAndSolving(void)
 	{
 		std::cout << "[ERROR](Sovling) Exception during optimization" << std::endl;
 	}
+
+	// refinement of tracking result
+	SmoothingTrackingResult();
+
 	return true;
 }
 
 /************************************************************************
- Method Name: LoadGraph
+ Method Name: SmoothingTrackingResult
  Description: 
-	- load the hypergraph for 3D tracking
+	- 
  Input Arguments:
-	- strGraphPath: path for the graph file
+	- 
  Return Values:
-	- bool variable indicating the proper loading of the graph 
+	- 
 ************************************************************************/
-bool CHyperGraphTracker::LoadGraph(const std::string strGraphPath)
+void CHyperGraphTracker::SmoothingTrackingResult(void)
 {
-	return true;
+	// for smoother
+	std::vector<Qset> precomputedQsets;
+	for (int windowSize = 1; windowSize <= SGS_DEFAULT_SPAN; windowSize++)
+	{
+		precomputedQsets.push_back(CSGSmooth::CalculateQ(windowSize));
+	}
+
+	for (int tIdx = 0; tIdx < queueTracks_.size(); tIdx++)
+	{
+		CSGSmooth smootherX, smootherY;
+		smootherX.SetPrecomputedQsets(&precomputedQsets);
+		smootherY.SetPrecomputedQsets(&precomputedQsets);
+		for (int pIdx = 0; pIdx < queueTracks_[tIdx].locations_.size(); pIdx++)
+		{
+			smootherX.Insert(queueTracks_[tIdx].locations_[pIdx].x);			
+			smootherY.Insert(queueTracks_[tIdx].locations_[pIdx].y);
+		}
+
+		for (int pIdx = 0; pIdx < queueTracks_[tIdx].locations_.size(); pIdx++)
+		{
+			queueTracks_[tIdx].locations_[pIdx].x = smootherX.GetResult(pIdx);
+			queueTracks_[tIdx].locations_[pIdx].y = smootherY.GetResult(pIdx);
+		}
+	}
 }
 
 /************************************************************************
@@ -716,7 +763,7 @@ bool CHyperGraphTracker::LoadDetections(void)
 					fscanf_s(fid, "{\n\tROOT:{%f,%f,%f,%f}\n", &x, &y, &w, &h);
 					newDetection.id_           = numDetections_++;
 					newDetection.camIdx_       = cIdx;
-					newDetection.frameIdx_     = fIdx;
+					newDetection.frameIdx_     = fIdx - SET_.startFrameIdx();
 					newDetection.rect_         = cv::Rect2d((double)x-1.0, (double)y-1.0, (double)w, (double)h);
 					newDetection.bottomCenter_ = cv::Point2d((double)x-1.0 + 0.5*(double)w, (double)y - 1.0 + (double)h);
 					vecCamModels_[cIdx].imageToWorld(newDetection.bottomCenter_.x, newDetection.bottomCenter_.y, 
@@ -770,6 +817,7 @@ void CHyperGraphTracker::GenerateReconstructions(void)
 	for (int fIdx = 0; fIdx < vecvecPtDetectionSets_.size(); fIdx++)
 	{
 		printf("\rGenerate reconstructions at frame %04d/%04d ... ", fIdx+1, SET_.numFrames());
+
 		// generate combinations
 		DetectionSet nullSet(SET_.numCams(), NULL);		
 		std::deque<DetectionSet> detectionCombinations;

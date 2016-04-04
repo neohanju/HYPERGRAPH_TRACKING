@@ -29,6 +29,9 @@
     <ClCompile Include="Evaluator.cpp">
       <Filter>Evaluation</Filter>
     </ClCompile>
+    <ClCompile Include="SGSmooth.cpp">
+      <Filter>Helpers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="settings.txt">
@@ -61,6 +64,9 @@
     </ClInclude>
     <ClInclude Include="Evaluator.h">
       <Filter>Evaluation</Filter>
+    </ClInclude>
+    <ClInclude Include="SGSmooth.h">
+      <Filter>Helpers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

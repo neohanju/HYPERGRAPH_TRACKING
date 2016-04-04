@@ -162,6 +162,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Reconstruction.cpp" />
     <ClCompile Include="Setting.cpp" />
+    <ClCompile Include="SGSmooth.cpp" />
     <ClCompile Include="Track.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -175,6 +176,7 @@
     <ClInclude Include="Reconstruction.h" />
     <ClInclude Include="Setting.h" />
     <ClInclude Include="settings.txt" />
+    <ClInclude Include="SGSmooth.h" />
     <ClInclude Include="Track.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

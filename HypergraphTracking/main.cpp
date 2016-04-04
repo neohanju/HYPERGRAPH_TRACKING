@@ -41,7 +41,7 @@ int main(int argc, char* argv[])
 	hgTracker.Initialize(SET);
 	hgTracker.Run();
 	hgTracker.SaveTrackingResultToFile(strTrackingResultPath);
-	//hgTracker.Visualization();
+	hgTracker.Visualization(0);
 
 	std::string strEvaluationFileName = "hofmann_" + strCurTime + "_eval.txt";
 	CEvaluator evaluator;

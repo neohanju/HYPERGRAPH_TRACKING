@@ -20,11 +20,11 @@ public:
 	bool Finalize(void);
 	bool Run(void);
 	bool SaveTrackingResultToFile(const std::string strFilePath);
-	void Visualization(void);
+	void Visualization(int viewIdx);
 
 private:
 	bool ConstructGraphAndSolving(void);
-	bool LoadGraph(const std::string strGraphPath);
+	void SmoothingTrackingResult(void);
 	bool LoadDetections(void);
 	void GenerateReconstructions(void);
 	void GenerateDetectionCombinations(DetectionSet curCombination, 
@@ -47,7 +47,6 @@ private:
 	std::vector<ReconstructionSet> vecvecPtReconstructions_; // frame / reconstruction	
 	ReconstructionSet vecPtReconstructions_; // for fast access at the end of graph solving
 	std::deque<CTrack> queueTracks_;	
-	std::vector<std::deque<std::pair<int, cv::Rect>>> vecQueueRectsOnTime_;
 
 	int numDetections_;
 	int numReconstructions_;
