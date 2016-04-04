@@ -252,7 +252,7 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 	try
 	{
 		fopen_s(&fp, strFilePath.c_str(), "w");		
-		fprintf_s(fp, "numObj=%d,numTime=%d\n", queueTracks_.size(), SET_.numFrames());
+		fprintf_s(fp, "numObj=%d,numTime=%d\n", (int)queueTracks_.size(), SET_.numFrames());
 
 		// write X
 		fprintf_s(fp, "X={\n");
@@ -267,11 +267,11 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 			{
 				fprintf_s(fp, "%f,", curRow[colIdx]);				
 			}
-			fscanf_s(fp, "\n");
-		}
+			fprintf_s(fp, "\n");
+		}		
 
 		// write Y
-		fprintf_s(fp, "X={\n");
+		fprintf_s(fp, "}\nY={\n");
 		for (int fIdx = 0; fIdx < SET_.numFrames(); fIdx++)
 		{
 			std::vector<float> curRow(numObjects, 0.0);
@@ -283,8 +283,9 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 			{
 				fprintf_s(fp, "%f,", curRow[colIdx]);				
 			}
-			fscanf_s(fp, "\n");
+			fprintf_s(fp, "\n");
 		}
+		fprintf_s(fp, "}\n");
 		fclose(fp);
 	}
 	catch (int dwError)

@@ -148,13 +148,14 @@ void CEvaluator::LoadTrackingResultFromText(std::string strFilepath)
 
 		float readingFloat;
 		int numObject = 0;
-		fscanf_s(fp, "MatX:(%d,%d)\n", &this->m_nNumTime, &numObject);
+		fscanf_s(fp, "numObj=%d,numTime=%d\n", &numObject, &this->m_nNumTime);		
 		this->m_queueSavedResult.resize(this->m_nNumTime);
 		this->m_queueID.clear();
 		this->m_nSavedResult = this->m_nNumTime;
 		for (int objIdx = 0; objIdx < numObject; objIdx++) { this->m_queueID.push_back(objIdx); }
 
 		// read X
+		fscanf_s(fp, "X={");
 		for (int timeIdx = 0; timeIdx < this->m_nNumTime; timeIdx++)
 		{
 			for (int objIdx = 0; objIdx < numObject; objIdx++)
@@ -163,11 +164,11 @@ void CEvaluator::LoadTrackingResultFromText(std::string strFilepath)
 				if (0.0 == readingFloat) { continue; }
 				this->m_queueSavedResult[timeIdx].push_back(std::make_pair(objIdx, cv::Point2d((double)readingFloat, 0.0)));
 			}
-			fscanf_s(fp, "\n");			
+			fscanf_s(fp, "\n");
 		}
 
 		// read Y
-		fscanf_s(fp, "MatY:(%d,%d)\n", &this->m_nNumTime, &numObject);
+		fscanf_s(fp, "}\nY={\n");
 		for (int timeIdx = 0; timeIdx < this->m_nNumTime; timeIdx++)
 		{
 			for (int objIdx = 0; objIdx < numObject; objIdx++)
@@ -193,6 +194,7 @@ void CEvaluator::LoadTrackingResultFromText(std::string strFilepath)
 			}
 			fscanf_s(fp, "\n");
 		}
+		fscanf_s(fp, "}\n");
 
 		fclose(fp);
 
