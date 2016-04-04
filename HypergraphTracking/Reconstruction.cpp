@@ -165,8 +165,10 @@ bool CReconstruction::IsCompatible(const CReconstruction &recons1, const CRecons
 	DetectionSet::iterator findIter;
 	for (int d1Idx = 0; d1Idx < recons1.detections_.size(); d1Idx++)
 	{
+		if (NULL == recons1.detections_[d1Idx]) { continue; }
 		for (int d2Idx = 0; d2Idx < recons2.detections_.size(); d2Idx++)
 		{
+			if (NULL == recons2.detections_[d2Idx]) { continue; }
 			if (recons1.detections_[d1Idx] == recons2.detections_[d2Idx])
 			{
 				return false;

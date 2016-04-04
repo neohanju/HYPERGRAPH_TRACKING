@@ -359,7 +359,7 @@ void CHyperGraphTracker::Visualization(int viewIdx)
 		for (int rectIdx = 0; rectIdx < vecQueueRectsOnTime[fIdx].size(); rectIdx++)
 		{
 			int trackId = vecQueueRectsOnTime[fIdx][rectIdx].first;
-			cv::Rect *curRect = &vecQueueRectsOnTime[fIdx][rectIdx].second;
+			cv::Rect *curRect = &vecQueueRectsOnTime[fIdx][rectIdx].second;			
 			cv::rectangle(inputFrame, *curRect, COLORS[trackId], 2);
 			cv::putText(inputFrame, std::to_string(trackId), cv::Point(curRect->x, curRect->y+40), cv::FONT_HERSHEY_SIMPLEX, 1.0, COLORS[trackId]);
 
@@ -838,6 +838,11 @@ void CHyperGraphTracker::GenerateReconstructions(void)
 			listReconstructions_.push_back(newReconstruction);
 			vecPtReconstructions_.push_back(&listReconstructions_.back());
 			vecvecPtReconstructions_[fIdx].push_back(&listReconstructions_.back());
+
+			if (newReconstruction.numDetections_ > 1)
+			{
+				int a = newReconstruction.id_;
+			}
 		}
 	}
 	printf("done\n");

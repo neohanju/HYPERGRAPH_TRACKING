@@ -1,5 +1,5 @@
 #include "Evaluator.h"
-#include "defines.hpp"
+#include "defines.h"
 #include "opencv2\core\core.hpp"
 #include <numeric>
 

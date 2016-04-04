@@ -167,7 +167,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cameraModel.h" />
-    <ClInclude Include="defines.hpp" />
+    <ClInclude Include="defines.h" />
     <ClInclude Include="Detection.h" />
     <ClInclude Include="Evaluator.h" />
     <ClInclude Include="hjlib.h" />

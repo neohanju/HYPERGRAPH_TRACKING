@@ -46,7 +46,6 @@
     <ClInclude Include="cameraModel.h">
       <Filter>Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="defines.hpp" />
     <ClInclude Include="Setting.h">
       <Filter>Data</Filter>
     </ClInclude>
@@ -68,6 +67,7 @@
     <ClInclude Include="SGSmooth.h">
       <Filter>Helpers</Filter>
     </ClInclude>
+    <ClInclude Include="defines.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Data">

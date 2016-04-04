@@ -1,5 +1,8 @@
 #pragma once
 
+#if !defined(DEFINE_H)
+#define DEFINE_H (1)
+
 #include <string>
 
 /////////////////////////////////////////////////////////////////////////
@@ -54,6 +57,7 @@ struct stHypergraphTrackingParams
 	double DETECTION_MIN_HEIGHT;
 };
 
+#endif
 
 //()()
 //('')HAANJU.YOO
