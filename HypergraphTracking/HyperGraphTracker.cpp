@@ -838,11 +838,6 @@ void CHyperGraphTracker::GenerateReconstructions(void)
 			listReconstructions_.push_back(newReconstruction);
 			vecPtReconstructions_.push_back(&listReconstructions_.back());
 			vecvecPtReconstructions_[fIdx].push_back(&listReconstructions_.back());
-
-			if (newReconstruction.numDetections_ > 1)
-			{
-				int a = newReconstruction.id_;
-			}
 		}
 	}
 	printf("done\n");
