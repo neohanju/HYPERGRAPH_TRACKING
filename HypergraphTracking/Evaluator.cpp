@@ -709,7 +709,7 @@ void CEvaluator::PrintResultToFile(const std::string strFilepathAndName)
 	FILE *fp;
 	try
 	{
-		fopen_s(&fp, strFilepathAndName.c_str();, "w");
+		fopen_s(&fp, strFilepathAndName.c_str(), "w");
 		fprintf_s(fp, "Evaluating PETS on ground plane...\n");
 		fprintf_s(fp, "| Recl Prcn  FAR| MT PT ML|  FPR  FNR  FP  FN  ID  FM  err| MOTA MOTP MOTL\n");
 		fprintf_s(fp, "|%5.1f%5.1f%5.2f|%3i%3i%3i|%5.1f%5.1f%4i%4i%4i%4i%5i|%5.1f %4.1f %4.1f\n", 

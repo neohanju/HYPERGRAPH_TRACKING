@@ -236,7 +236,7 @@ bool CHyperGraphTracker::SaveTrackingResultToFile(const std::string strFilePath)
 	}
 
 	// make X and Y mats
-	int numObjects = queueTracks_.size();
+	int numObjects = (int)queueTracks_.size();
 	std::vector<std::deque<std::pair<int, cv::Point3d>>> vecQueueLocationsOnTime(SET_.numFrames());
 	for (int tIdx = 0; tIdx < queueTracks_.size(); tIdx++)
 	{
